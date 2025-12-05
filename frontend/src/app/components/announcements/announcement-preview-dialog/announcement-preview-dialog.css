@@ -1,0 +1,423 @@
+.preview-dialog {
+  display: flex;
+  flex-direction: column;
+  max-height: 85vh;
+}
+
+/* Dialog Header */
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  margin: 0;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-icon {
+  color: var(--primary-color);
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
+}
+
+.header-content h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.close-btn {
+  color: var(--text-secondary);
+}
+
+/* Dialog Content */
+.dialog-content {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Info Section */
+.info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.info-row .label {
+  font-weight: 500;
+  color: var(--text-secondary);
+  min-width: 140px;
+}
+
+.info-row .value {
+  color: var(--text-primary);
+}
+
+/* Tabs */
+.preview-tabs {
+  margin-top: 16px;
+}
+
+.tab-content {
+  padding: 24px 0;
+}
+
+/* Field Group */
+.field-group {
+  margin-bottom: 5px;
+}
+
+.field-group:last-child {
+  margin-bottom: 0;
+}
+
+.field-group label {
+  display: block;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 5px;
+  font-size: 14px;
+}
+
+.field-value {
+  color: var(--text-primary);
+  padding: 5px;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+  border-left: 3px solid var(--primary-color);
+}
+
+.html-content {
+  line-height: 1.6;
+  min-height: 100px;
+}
+
+.html-content ::ng-deep p {
+  margin: 8px 0;
+}
+
+.html-content ::ng-deep ul, .html-content ::ng-deep ol {
+  margin: 8px 0;
+  padding-left: 24px;
+}
+
+/* Recipients */
+.recipients-summary {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+}
+
+.summary-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.summary-item mat-icon {
+  color: var(--primary-color);
+}
+
+.summary-item.primary {
+  padding: 6px 12px;
+  background: var(--primary-color, #1976D2) !important;
+  color: white !important;
+  border-radius: 16px;
+  font-size: 14px;
+}
+
+.summary-item.primary mat-icon {
+  color: white !important;
+}
+
+.summary-item.primary span {
+  color: white !important;
+}
+
+.groups-section h4 {
+  margin: 0 0 16px 0;
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.group-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.group-item {
+  padding: 16px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border-left: 4px solid var(--primary-color);
+}
+
+.group-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.group-icon {
+  color: var(--primary-color);
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+}
+
+.group-info {
+  flex: 1;
+}
+
+.group-name {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  font-size: 15px;
+}
+
+.group-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.group-type,
+.group-desc {
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.group-type {
+  background: var(--primary-color);
+  color: white;
+}
+
+.group-desc {
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  font-weight: normal;
+  font-style: italic;
+}
+
+/* Files */
+.files-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+  border-left: 3px solid var(--primary-color);
+  transition: all 0.2s ease;
+}
+
+.file-item.clickable {
+  cursor: pointer;
+}
+
+.file-item.clickable:hover {
+  background: var(--bg-primary);
+  transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.file-item mat-icon {
+  color: var(--primary-color);
+}
+
+.file-item .download-icon {
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+}
+
+.file-item.clickable:hover .download-icon {
+  opacity: 1;
+}
+
+.file-info {
+  flex: 1;
+}
+
+.file-name {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.file-size {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+/* Movements */
+.movements-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.movement-item {
+  padding: 16px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border-left: 4px solid var(--primary-color);
+}
+
+.movement-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.movement-icon {
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+  color: var(--primary-color);
+}
+
+.movement-icon.onaylama {
+  color: var(--success-color);
+}
+
+.movement-icon.reddetme {
+  color: var(--error-color);
+}
+
+.movement-icon.gonderim {
+  color: var(--info-color);
+}
+
+.movement-info {
+  flex: 1;
+}
+
+.movement-type {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.movement-user {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.movement-date {
+  color: var(--text-tertiary);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.movement-note {
+  margin-top: 12px;
+  padding: 12px;
+  background: var(--bg-primary);
+  border-radius: 6px;
+  font-style: italic;
+  color: var(--text-secondary);
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-secondary);
+}
+
+.empty-state mat-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  opacity: 0.5;
+  margin-bottom: 12px;
+}
+
+.empty-state p {
+  margin: 0;
+}
+
+/* Loading */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 20px;
+}
+
+.loading-container p {
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Dialog Actions */
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  margin: 0;
+}
+
+.dialog-actions button {
+  min-width: 100px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .preview-dialog {
+    max-height: 90vh;
+  }
+
+  .dialog-header {
+    padding: 16px;
+  }
+
+  .dialog-content {
+    padding: 16px;
+  }
+
+  .info-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .info-row .label {
+    min-width: auto;
+  }
+}

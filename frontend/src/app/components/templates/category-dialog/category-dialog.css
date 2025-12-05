@@ -1,0 +1,70 @@
+h2[mat-dialog-title] {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin: 0;
+  color: var(--text-primary);
+}
+
+mat-dialog-content {
+  padding: var(--space-lg);
+  min-width: 400px;
+}
+
+mat-dialog-content form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.full-width {
+  width: 100%;
+}
+
+.color-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.color-circle {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+}
+
+.icon-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.icon-option mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm);
+  background: #ffebee;
+  color: #c62828;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+}
+
+.error-message mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+mat-dialog-actions {
+  padding: var(--space-md) var(--space-lg);
+  gap: var(--space-sm);
+}

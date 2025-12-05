@@ -1,0 +1,94 @@
+<header class="navbar">
+  <div class="navbar-content">
+    <!-- Sol: Menu + Başlık -->
+    <div class="navbar-start">
+      <button mat-icon-button (click)="toggleSidebar.emit()" class="menu-btn" aria-label="Menü">
+        <mat-icon>menu</mat-icon>
+      </button>
+      <h1 class="navbar-title">{{ pageTitle() }}</h1>
+      @if (breadcrumbs().length > 1) {
+        <div class="breadcrumb-inline">
+          @for (crumb of breadcrumbs(); track crumb.url; let i = $index) {
+            @if (i < breadcrumbs().length - 1) {
+              <a [routerLink]="crumb.url">{{ crumb.label }}</a>
+              <mat-icon>chevron_right</mat-icon>
+            } @else {
+              <span>{{ crumb.label }}</span>
+            }
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Sağ: Aksiyonlar + Profil -->
+    <div class="navbar-end">
+      <button mat-icon-button (click)="toggleSearchBar()" class="icon-btn" matTooltip="Ara">
+        <mat-icon>search</mat-icon>
+      </button>
+      @if (currentUser().role === 'ADMIN' || currentUser().role === 'MANAGER' || currentUser().role === 'COORDINATOR') {
+        <button mat-icon-button (click)="goToPendingApprovals()" class="icon-btn" matTooltip="Onay Bekleyenler">
+          <mat-icon [matBadge]="pendingApprovalCount()" matBadgeColor="accent" [matBadgeHidden]="pendingApprovalCount() === 0" aria-hidden="false">pending_actions</mat-icon>
+        </button>
+      }
+      <button mat-button [matMenuTriggerFor]="userMenu" class="profile-btn">
+        <div class="avatar">{{ userInitials() }}</div>
+        <span class="profile-name">{{ userFullName() }}</span>
+        <mat-icon>expand_more</mat-icon>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- Arama Bar -->
+@if (showSearch()) {
+  <div class="search-bar">
+    <mat-form-field appearance="outline" class="search-input">
+      <mat-icon matPrefix>search</mat-icon>
+      <input matInput placeholder="Ara..."
+             [ngModel]="searchQuery()"
+             (ngModelChange)="searchQuery.set($event)"
+             (keyup.enter)="onSearch()">
+      <button matSuffix mat-icon-button (click)="toggleSearchBar()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </mat-form-field>
+  </div>
+}
+
+
+<!-- User Menu -->
+<mat-menu #userMenu="matMenu" xPosition="before">
+  <div class="user-header">
+    <div class="avatar-large">{{ userInitials() }}</div>
+    <div>
+      <p class="user-header-name">{{ userFullName() }}</p>
+      <p class="user-header-email">{{ currentUser().email }}</p>
+      <span class="role-badge">{{ userRoleName() }}</span>
+    </div>
+  </div>
+  <mat-divider></mat-divider>
+  <button mat-menu-item (click)="goToProfile()">
+    <mat-icon>person</mat-icon>
+    <span>Profil</span>
+  </button>
+  <button mat-menu-item (click)="goToSettings()">
+    <mat-icon>settings</mat-icon>
+    <span>Ayarlar</span>
+  </button>
+  @if (currentUser().role === 'ADMIN' && isDevelopment) {
+    <mat-divider></mat-divider>
+    <button mat-menu-item (click)="openHangfireDashboard()">
+      <mat-icon>schedule</mat-icon>
+      <span>Hangfire Dashboard</span>
+    </button>
+    <button mat-menu-item (click)="openSeqDashboard()">
+      <mat-icon>analytics</mat-icon>
+      <span>Serilog Dashboard</span>
+    </button>
+  }
+  <mat-divider></mat-divider>
+  <button mat-menu-item (click)="logout()" class="logout-item">
+    <mat-icon>logout</mat-icon>
+    <span>Çıkış</span>
+  </button>
+</mat-menu>

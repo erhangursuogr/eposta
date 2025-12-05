@@ -1,0 +1,76 @@
+<mat-nav-list class="background-primary-color center-content">
+  @if (mobileQuery.matches) {
+    <button class="close-button" mat-icon-button (click)="closeSidebar.emit()">
+      <mat-icon class="close-icon">close</mat-icon>
+    </button>
+  }
+
+  <!-- Modern Logo Section -->
+  <a [routerLink]="mainRoute" class="logo-link">
+    <div class="logo-container">
+      <span class="logo-text">DEÜ</span>
+    </div>
+    <p class="app-name">Duyuru Yönetim Sistemi</p>
+  </a>
+
+  <!-- User Info Card -->
+  <div class="user-info-card">
+    <div class="user-avatar-sidebar">
+      {{ userInitials }}
+    </div>
+    <div class="user-details">
+      <span class="user-name-text">{{ userFullName }}</span>
+      <span class="user-role-badge">{{ getRoleName() }}</span>
+    </div>
+  </div>
+
+  <!-- Ana sayfa linki -->
+  <a mat-list-item [routerLink]="mainRoute" (click)="hideSideBar()" routerLinkActive="list-item-active" [routerLinkActiveOptions]="{exact: true}" class="home-menu-item">
+    <div class="home-item-content">
+      <mat-icon class="home-icon side-color" matListIcon>home</mat-icon>
+      <span class="home-text side-color">Ana Sayfa</span>
+    </div>
+  </a>
+
+  <!-- Menu Sections with Expansion Panels -->
+  @for (section of menuSections; track trackBySectionId($index, section)) {
+    <mat-expansion-panel class="menu-section" [expanded]="section.expanded" (opened)="onPanelOpened(section.id)" (closed)="onPanelClosed(section.id)">
+      <mat-expansion-panel-header class="section-header">
+        <mat-panel-title class="section-title">
+          <div class="section-title-content">
+            <mat-icon class="section-icon">{{section.icon}}</mat-icon>
+            <span class="section-text">{{ section.title }}</span>
+          </div>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <!-- Section Children -->
+      <div class="section-children">
+        @for (item of section.children; track trackByItemId($index, item)) {
+          <a mat-list-item [routerLink]="item.routerLink" (click)="hideSideBar()" routerLinkActive="list-item-active" class="child-menu-item">
+            <div class="child-item-content">
+              <mat-icon class="child-icon">{{item.icon}}</mat-icon>
+              <span class="child-text">{{ item.title }}</span>
+            </div>
+          </a>
+        }
+      </div>
+    </mat-expansion-panel>
+  }
+
+  <!-- Bottom Menu Items -->
+  <div class="bottom-menu">
+    <a mat-list-item (click)="yardim()" class="bottom-menu-item">
+      <div class="bottom-item-content">
+        <mat-icon class="side-color" matListIcon>help</mat-icon>
+        <span class="side-color">Yardım</span>
+      </div>
+    </a>
+
+    <a mat-list-item routerLink="/" (click)="logout()" class="bottom-menu-item logout-item">
+      <div class="bottom-item-content">
+        <mat-icon class="side-color" matListIcon>logout</mat-icon>
+        <span class="side-color">Çıkış Yap</span>
+      </div>
+    </a>
+  </div>
+</mat-nav-list>

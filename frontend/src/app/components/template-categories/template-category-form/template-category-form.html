@@ -1,0 +1,101 @@
+<div class="page-container">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">{{ isEditMode() ? 'Kategori Düzenle' : 'Yeni Kategori' }}</h1>
+      <p class="text-muted">Şablon kategorisi {{ isEditMode() ? 'düzenleyin' : 'oluşturun' }}</p>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-container">
+      <mat-spinner></mat-spinner>
+    </div>
+  } @else {
+    <form [formGroup]="categoryForm" (ngSubmit)="onSubmit()">
+      <mat-card>
+        <mat-card-content>
+          <div class="form-grid">
+            <!-- Kategori Adı -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label style="font-weight: 500;">Kategori Adı</mat-label>
+              <input matInput formControlName="kategoriAdi" placeholder="Örn: Vefat, Kutlama">
+              @if (categoryForm.get('kategoriAdi')?.hasError('required')) {
+                <mat-error>Kategori adı zorunludur</mat-error>
+              }
+              @if (categoryForm.get('kategoriAdi')?.hasError('maxlength')) {
+                <mat-error>En fazla 100 karakter olabilir</mat-error>
+              }
+            </mat-form-field>
+
+            <!-- Açıklama -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label style="font-weight: 500;">Açıklama</mat-label>
+              <textarea matInput formControlName="aciklama" rows="3" placeholder="Kategori açıklaması (isteğe bağlı)"></textarea>
+              @if (categoryForm.get('aciklama')?.hasError('maxlength')) {
+                <mat-error>En fazla 500 karakter olabilir</mat-error>
+              }
+            </mat-form-field>
+
+            <!-- Renk -->
+            <mat-form-field appearance="outline">
+              <mat-label style="font-weight: 500;">Renk</mat-label>
+              <mat-select formControlName="renk">
+                @for (color of colors; track color.value) {
+                  <mat-option [value]="color.value">
+                    <div class="color-option">
+                      <div class="color-swatch" [style.background-color]="color.value"></div>
+                      {{ color.name }}
+                    </div>
+                  </mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <!-- İkon -->
+            <mat-form-field appearance="outline">
+              <mat-label style="font-weight: 500;">İkon</mat-label>
+              <mat-select formControlName="ikon">
+                @for (icon of icons; track icon) {
+                  <mat-option [value]="icon">
+                    <div class="icon-option">
+                      <mat-icon>{{ icon }}</mat-icon>
+                      {{ icon }}
+                    </div>
+                  </mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <!-- Sıra No -->
+            <mat-form-field appearance="outline">
+              <mat-label style="font-weight: 500;">Sıra No</mat-label>
+              <input matInput type="number" formControlName="siraNo" placeholder="0">
+              @if (categoryForm.get('siraNo')?.hasError('required')) {
+                <mat-error>Sıra no zorunludur</mat-error>
+              }
+            </mat-form-field>
+
+            <!-- Önizleme -->
+            <div class="preview-section full-width">
+              <h3>Önizleme</h3>
+              <div class="category-preview" [style.background-color]="categoryForm.get('renk')?.value">
+                <mat-icon>{{ categoryForm.get('ikon')?.value }}</mat-icon>
+                <span>{{ categoryForm.get('kategoriAdi')?.value || 'Kategori Adı' }}</span>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+
+        <mat-card-actions align="end">
+          <button mat-button type="button" (click)="cancel()" [disabled]="loading()">
+            İptal
+          </button>
+          <button mat-raised-button color="primary" type="submit" [disabled]="categoryForm.invalid || loading()">
+            <mat-icon>save</mat-icon>
+            {{ isEditMode() ? 'Güncelle' : 'Kaydet' }}
+          </button>
+        </mat-card-actions>
+      </mat-card>
+    </form>
+  }
+</div>

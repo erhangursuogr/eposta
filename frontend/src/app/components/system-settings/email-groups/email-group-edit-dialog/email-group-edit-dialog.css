@@ -1,0 +1,164 @@
+/* Edit Dialog Styles */
+
+/* Dialog Header */
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-lg);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.dialog-header h2 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+/* Loading State */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--space-3xl);
+  min-height: 300px;
+}
+
+/* Info Chip */
+.info-chip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-lg);
+  font-size: var(--font-size-sm);
+}
+
+/* Form Fields */
+.full-width {
+  width: 100%;
+  display: block;
+}
+
+/* Status Toggle */
+.status-toggle {
+  margin: var(--space-lg) 0;
+  padding: var(--space-md);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+}
+
+.status-toggle mat-slide-toggle {
+  display: block;
+  margin-bottom: var(--space-md);
+}
+
+.status-toggle mat-hint {
+  display: block;
+  margin-top: var(--space-sm);
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  line-height: var(--line-height-normal);
+}
+
+/* Members Section */
+.members-section {
+  margin-top: var(--space-xl);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--border-color);
+}
+
+.members-section h4 {
+  margin: 0 0 var(--space-md) 0;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+/* Add Member Form */
+.add-member {
+  display: flex;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+  align-items: flex-start;
+}
+
+.add-member mat-form-field {
+  flex: 1;
+  min-width: 150px;
+}
+
+.add-member button {
+  margin-top: 16px;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .add-member {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .add-member mat-form-field {
+    width: 100%;
+  }
+
+  .add-member button {
+    width: 100%;
+    margin-top: 0;
+  }
+}
+
+/* Members List */
+.members-list {
+  max-height: none;
+  overflow-y: visible;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.member-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2px var(--space-xs);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-base);
+}
+
+.member-item:hover {
+  background: var(--bg-hover);
+}
+
+.member-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.member-email {
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.member-name {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.member-item button {
+  margin-left: var(--space-sm);
+}

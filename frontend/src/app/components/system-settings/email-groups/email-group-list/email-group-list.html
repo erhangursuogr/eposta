@@ -1,0 +1,185 @@
+<div class="page-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <mat-icon class="title-icon">group_work</mat-icon>
+        Duyuru Grup Yönetimi
+      </h1>
+      <p class="page-description">Duyuru gruplarını oluşturun, düzenleyin ve yönetin</p>
+    </div>
+    <button mat-raised-button color="primary" (click)="openCreateDialog()">
+      <mat-icon>add</mat-icon>
+      Yeni Grup
+    </button>
+  </div>
+
+  <!-- Filters -->
+  <mat-card class="filter-card">
+    <div class="filter-container">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label style="font-weight: 500;">Grup Ara</mat-label>
+        <input matInput placeholder="Grup adı..." [(ngModel)]="searchTerm" (input)="onSearch()">
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="filter-field">
+        <mat-label style="font-weight: 500;" style="font-weight: 500;">Grup Tipi</mat-label>
+        <mat-select [(ngModel)]="filterType" (selectionChange)="onFilterChange()">
+          @for (tip of grupTipleri; track tip.value) {
+            <mat-option [value]="tip.value">{{ tip.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="filter-field">
+        <mat-label style="font-weight: 500;" style="font-weight: 500;">Durum</mat-label>
+        <mat-select [(ngModel)]="filterStatus" (selectionChange)="onFilterChange()">
+          @for (status of statusOptions; track status.value) {
+            <mat-option [value]="status.value">{{ status.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <button mat-raised-button (click)="clearFilters()">
+        <mat-icon>clear</mat-icon>
+        Temizle
+      </button>
+    </div>
+  </mat-card>
+
+  <!-- Loading -->
+  @if (loading()) {
+    <app-loading message="Gruplar yükleniyor..." />
+  }
+
+  <!-- Empty State -->
+  @if (!loading() && filteredGroups.length === 0) {
+    <app-empty-state
+      icon="group_off"
+      title="Grup Bulunamadı"
+      description="Henüz email grubu oluşturulmamış veya arama kriterlerinize uygun grup yok."
+      actionLabel="İlk Grubu Oluştur"
+      (action)="openCreateDialog()"
+    />
+  }
+
+  <!-- Groups Table -->
+  @if (!loading() && filteredGroups.length > 0) {
+    <mat-card>
+      <table mat-table [dataSource]="filteredGroups" class="groups-table">
+
+        <!-- Grup Adı Column -->
+        <ng-container matColumnDef="grupAdi">
+          <th mat-header-cell *matHeaderCellDef>Grup Adı</th>
+          <td mat-cell *matCellDef="let group">
+            <div class="group-name">
+              <strong>{{ group.grupAdi }}</strong>
+              @if (group.aciklama) {
+                <p class="group-desc">{{ group.aciklama }}</p>
+              }
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Grup Tipi Column -->
+        <ng-container matColumnDef="grupTipi">
+          <th mat-header-cell *matHeaderCellDef>Tip</th>
+          <td mat-cell *matCellDef="let group">
+            <mat-chip [class]="getGrupTipiBadgeClass(group.grupTipi)">
+              {{ getGrupTipiText(group.grupTipi) }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <!-- Üye Sayısı Column -->
+        <ng-container matColumnDef="uyeSayisi">
+          <th mat-header-cell *matHeaderCellDef>Üye Sayısı</th>
+          <td mat-cell *matCellDef="let group">
+            <div class="member-count">
+              <mat-icon>group</mat-icon>
+              <span>{{ group.uyeSayisi }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Durum Column -->
+        <ng-container matColumnDef="aktif">
+          <th mat-header-cell *matHeaderCellDef>Durum</th>
+          <td mat-cell *matCellDef="let group">
+            @if (group.isActive) {
+              <mat-chip class="status-chip status-active">
+                <mat-icon class="chip-icon">check_circle</mat-icon>
+                Aktif
+              </mat-chip>
+            } @else {
+              <mat-chip class="status-chip status-inactive">
+                <mat-icon class="chip-icon">cancel</mat-icon>
+                Pasif
+              </mat-chip>
+            }
+          </td>
+        </ng-container>
+
+        <!-- BCC Only Column -->
+        <ng-container matColumnDef="bccOnly">
+          <th mat-header-cell *matHeaderCellDef>Kural</th>
+          <td mat-cell *matCellDef="let group">
+            @if (group.bccOnly) {
+              <mat-chip class="status-chip status-inactive">
+                <mat-icon class="chip-icon">visibility_off</mat-icon>
+                Sadece BCC
+              </mat-chip>
+            } @else {
+              <mat-chip class="status-chip status-active">
+                <mat-icon class="chip-icon">check_circle</mat-icon>
+                TO/CC/BCC
+              </mat-chip>
+            }
+          </td>
+        </ng-container>
+
+        <!-- Oluşturma Tarihi Column -->
+        <ng-container matColumnDef="olusturmaTarihi">
+          <th mat-header-cell *matHeaderCellDef>Oluşturma Tarihi</th>
+          <td mat-cell *matCellDef="let group">{{ formatDate(group.olusturmaTarihi) }}</td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>İşlemler</th>
+          <td mat-cell *matCellDef="let group">
+            <div class="action-buttons">
+              <button mat-mini-fab color="accent"
+                      class="action-btn action-btn-view"
+                      (click)="openDetailDialog(group)"
+                      matTooltip="Detayları Gör"
+                      matTooltipPosition="above">
+                <mat-icon>visibility</mat-icon>
+              </button>
+
+              <button mat-mini-fab color="primary"
+                      class="action-btn action-btn-edit"
+                      (click)="openEditDialog(group)"
+                      matTooltip="Düzenle"
+                      matTooltipPosition="above">
+                <mat-icon>edit</mat-icon>
+              </button>
+
+              <button mat-mini-fab color="warn"
+                      class="action-btn action-btn-delete"
+                      (click)="deleteGroup(group)"
+                      matTooltip="Sil"
+                      matTooltipPosition="above">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+    </mat-card>
+  }
+</div>

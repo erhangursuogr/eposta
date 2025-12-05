@@ -1,0 +1,68 @@
+<h2 mat-dialog-title>
+  <mat-icon>add</mat-icon>
+  Yeni Kategori Ekle
+</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="categoryForm">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label style="font-weight: 500;">Kategori Adı</mat-label>
+      <input matInput formControlName="kategoriAdi" placeholder="Örn: Duyurular" required>
+      <mat-icon matPrefix>label</mat-icon>
+      @if (categoryForm.get('kategoriAdi')?.hasError('required') && categoryForm.get('kategoriAdi')?.touched) {
+        <mat-error>Kategori adı zorunludur</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label style="font-weight: 500;">Renk</mat-label>
+      <mat-select formControlName="renk" required>
+        @for (color of colors; track color.value) {
+          <mat-option [value]="color.value">
+            <span class="color-option">
+              <span class="color-circle" [style.background-color]="color.value"></span>
+              {{ color.name }}
+            </span>
+          </mat-option>
+        }
+      </mat-select>
+      <mat-icon matPrefix>palette</mat-icon>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label style="font-weight: 500;">İkon</mat-label>
+      <mat-select formControlName="ikon" required>
+        @for (icon of icons; track icon.value) {
+          <mat-option [value]="icon.value">
+            <span class="icon-option">
+              <mat-icon>{{ icon.value }}</mat-icon>
+              {{ icon.name }}
+            </span>
+          </mat-option>
+        }
+      </mat-select>
+      <mat-icon matPrefix>insert_emoticon</mat-icon>
+    </mat-form-field>
+
+    @if (errorMessage) {
+      <div class="error-message">
+        <mat-icon>error</mat-icon>
+        {{ errorMessage }}
+      </div>
+    }
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()" [disabled]="saving">
+    İptal
+  </button>
+  <button mat-raised-button color="primary" (click)="onSave()"
+          [disabled]="categoryForm.invalid || saving">
+    @if (saving) {
+      Kaydediliyor...
+    } @else {
+      Kaydet
+    }
+  </button>
+</mat-dialog-actions>

@@ -1,0 +1,234 @@
+<div class="page-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <mat-icon class="title-icon">pending_actions</mat-icon>
+        Onay Bekleyen Duyurular
+      </h1>
+      <p class="page-description">Onayınızı bekleyen duyuruları görüntüleyin ve onaylayın/reddedin</p>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  @if (loading()) {
+    <app-loading message="Onay bekleyen duyurular yükleniyor..." />
+  }
+
+  <!-- Empty State -->
+  @if (!loading() && announcements().length === 0) {
+    <app-empty-state
+      icon="check_circle"
+      title="Onay Bekleyen Duyuru Yok"
+      description="Şu anda onayınızı bekleyen duyuru bulunmamaktadır."
+    />
+  }
+
+  <!-- Announcements List -->
+  @if (!loading() && announcements().length > 0) {
+    <div class="announcements-list">
+      @for (announcement of announcements(); track announcement.id) {
+        <mat-card class="announcement-card">
+          <mat-card-header>
+            <div class="card-header-content">
+              <div class="header-text">
+                    <mat-chip [class]="getStatusBadge(announcement.durum).class" class="status-chip">
+                    {{ getStatusBadge(announcement.durum).text }}
+                  </mat-chip>
+                <mat-card-title>
+                  {{ announcement.konu }}
+
+                  <!-- <mat-chip [class]="isEmailType(announcement) ? 'status-chip status-active' : 'status-chip status-warning'">
+                    {{ isEmailType(announcement) ? 'EMAIL' : 'SOSYAL MEDYA' }}
+                  </mat-chip> -->
+                </mat-card-title>
+                <!-- <mat-card-subtitle>{{ announcement.konu }}</mat-card-subtitle> -->
+              </div>
+              <button
+                mat-icon-button
+                (click)="viewDetails(announcement)"
+                matTooltip="Detayları Görüntüle">
+                <mat-icon>visibility</mat-icon>
+              </button>
+            </div>
+          </mat-card-header>
+
+          <mat-card-content>
+            <div class="announcement-info">
+              <div class="info-item">
+                <mat-icon>person</mat-icon>
+                <span><strong>Oluşturan:</strong> {{ announcement.olusturanKullaniciAdi || 'Bilinmiyor' }}</span>
+              </div>
+              <div class="info-item">
+                <mat-icon>assignment_ind</mat-icon>
+                <span><strong>Onaylayıcı:</strong> {{ announcement.onaylayanKullaniciAdi || 'Atanmamış' }}</span>
+              </div>
+              @if (isFinalApproval(announcement)) {
+                <div class="info-item">
+                  <mat-icon>supervisor_account</mat-icon>
+                  <span><strong>Koordinatör:</strong> {{ announcement.ilkOnaylayanKullaniciAdi || 'Bilinmiyor' }}</span>
+                </div>
+                @if (announcement.onayNotu) {
+                  <div class="info-item coordinator-note">
+                    <mat-icon>note</mat-icon>
+                    <span><strong>Koordinatör Notu:</strong> {{ announcement.onayNotu }}</span>
+                  </div>
+                }
+              }
+              <div class="info-item">
+                <mat-icon>calendar_today</mat-icon>
+                <span>{{ formatDate(announcement.olusturmaTarihi) }}</span>
+              </div>
+            </div>
+
+            <mat-divider class="divider"></mat-divider>
+
+            <!-- Action Selection -->
+            <div class="action-selection">
+              <p class="action-prompt">Bu duyuru için ne yapmak istersiniz?</p>
+              <div class="action-toggle">
+                <button
+                  mat-stroked-button
+                  [class.active]="getSelectedAction(announcement.id) === 'approve'"
+                  (click)="selectAction(announcement.id, 'approve')"
+                  [disabled]="loading()">
+                  <mat-icon>check_circle</mat-icon>
+                  Onaylamak İstiyorum
+                </button>
+                <button
+                  mat-stroked-button
+                  [class.active]="getSelectedAction(announcement.id) === 'reject'"
+                  (click)="selectAction(announcement.id, 'reject')"
+                  [disabled]="loading()">
+                  <mat-icon>cancel</mat-icon>
+                  Reddetmek İstiyorum
+                </button>
+              </div>
+            </div>
+
+            <!-- Onay Paneli (Sadece "Onaylamak İstiyorum" seçiliyse) -->
+            @if (getSelectedAction(announcement.id) === 'approve') {
+              <div class="approval-panel">
+                <!-- COORDINATOR APPROVAL (ILK_ONAY_BEKLIYOR) -->
+                @if (isFirstApproval(announcement) && isCoordinator()) {
+                  <div class="panel-header">
+                    <mat-icon color="primary">check_circle</mat-icon>
+                    <h3>Kontrolör Onayı</h3>
+                  </div>
+
+                  <!-- Manager Seçimi -->
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label style="font-weight: 500;">Yönetici Seçin (Zorunlu)</mat-label>
+                    <mat-select
+                      [value]="getSelectedManager(announcement.id)"
+                      (selectionChange)="setSelectedManager(announcement.id, $event.value)"
+                      required>
+                      @for (manager of managers(); track manager.id) {
+                        <mat-option [value]="manager.id">
+                          {{ manager.adSoyad }} ({{ manager.email }})
+                        </mat-option>
+                      }
+                    </mat-select>
+                    <mat-hint>Duyuru onaylandığında seçilen Yöneticiye atanacaktır</mat-hint>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label style="font-weight: 500;">Onay Notu (Opsiyonel)</mat-label>
+                    <textarea
+                      matInput
+                      rows="3"
+                      placeholder="Onay notunuzu buraya yazabilirsiniz..."
+                      [value]="getApprovalNote(announcement.id)"
+                      (input)="setApprovalNote(announcement.id, $any($event.target).value)"></textarea>
+                  </mat-form-field>
+
+                  <button
+                    mat-raised-button
+                    color="primary"
+                    (click)="approve(announcement)"
+                    [disabled]="loading() || !getSelectedManager(announcement.id)"
+                    class="full-width-button">
+                    <mat-icon>check_circle</mat-icon>
+                    Onayla ve Yöneticiye Gönder
+                  </button>
+                }
+
+                <!-- MANAGER APPROVAL (SON_ONAY_BEKLIYOR) -->
+                @if (isFinalApproval(announcement) && isManager()) {
+                  <div class="panel-header">
+                    <mat-icon color="primary">check_circle</mat-icon>
+                    <h3>Yönetici Son Onay</h3>
+                  </div>
+
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label style="font-weight: 500;">Onay Notu (Opsiyonel)</mat-label>
+                    <textarea
+                      matInput
+                      rows="3"
+                      placeholder="Onay notunuzu buraya yazabilirsiniz..."
+                      [value]="getApprovalNote(announcement.id)"
+                      (input)="setApprovalNote(announcement.id, $any($event.target).value)"></textarea>
+                  </mat-form-field>
+
+                  <!-- Onayla ve Gönder seçeneği (sadece EMAIL için) -->
+                  @if (isEmailType(announcement)) {
+                    <div class="approve-send-option">
+                      <mat-checkbox
+                        [checked]="getApproveAndSend(announcement.id)"
+                        (change)="setApproveAndSend(announcement.id, $any($event).checked)">
+                        Onayladıktan sonra direkt gönder
+                      </mat-checkbox>
+                      <p class="hint-text">
+                        ⚠️ Bu seçenek işaretlenirse duyuru onaylandıktan hemen sonra tüm alıcılara gönderilecektir
+                      </p>
+                    </div>
+                  }
+
+                  <button
+                    mat-raised-button
+                    color="primary"
+                    (click)="approve(announcement)"
+                    [disabled]="loading()"
+                    class="full-width-button">
+                    <mat-icon>{{ getApproveAndSend(announcement.id) && isEmailType(announcement) ? 'send' : 'check_circle' }}</mat-icon>
+                    {{ getApproveAndSend(announcement.id) && isEmailType(announcement) ? 'Onayla ve Gönder' : 'Duyuruyu Onayla' }}
+                  </button>
+                }
+              </div>
+            }
+
+            <!-- Red Paneli (Sadece "Reddetmek İstiyorum" seçiliyse) -->
+            @if (getSelectedAction(announcement.id) === 'reject') {
+              <div class="rejection-panel">
+                <div class="panel-header">
+                  <mat-icon color="warn">cancel</mat-icon>
+                  <h3>Reddetme İşlemi</h3>
+                </div>
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label style="font-weight: 500;">Red Nedeni (Zorunlu)</mat-label>
+                  <textarea
+                    matInput
+                    rows="3"
+                    placeholder="Reddetme nedeninizi buraya yazın..."
+                    [value]="getRejectionNote(announcement.id)"
+                    (input)="setRejectionNote(announcement.id, $any($event.target).value)"
+                    required></textarea>
+                  <mat-hint>Reddetme nedeni belirtmeniz zorunludur</mat-hint>
+                </mat-form-field>
+                <button
+                  mat-raised-button
+                  color="warn"
+                  (click)="reject(announcement)"
+                  [disabled]="loading()"
+                  class="full-width-button">
+                  <mat-icon>cancel</mat-icon>
+                  Duyuruyu Reddet
+                </button>
+              </div>
+            }
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>
+  }
+</div>

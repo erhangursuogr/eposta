@@ -1,0 +1,418 @@
+<div class="page-container">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <mat-icon class="title-icon">campaign</mat-icon>
+        Duyuru Yönetimi
+      </h1>
+      <p class="page-description">Tüm duyuruları görüntüleyin, yönetin ve takip edin</p>
+    </div>
+
+    <div class="header-actions">
+      @if (user().role === 'ADMIN' || user().role === 'MANAGER' || user().role === 'EDITOR') {
+        <button mat-raised-button color="primary" (click)="createNew()" class="create-button">
+          <mat-icon>add</mat-icon>
+          Yeni Duyuru
+        </button>
+      }
+
+      <button mat-icon-button [matMenuTriggerFor]="exportMenu" matTooltip="Dışa Aktar" class="export-button">
+        <mat-icon>download</mat-icon>
+      </button>
+      <mat-menu #exportMenu="matMenu">
+        <button mat-menu-item (click)="exportToExcel()">
+          <mat-icon class="icon-excel">description</mat-icon>
+          <span>Excel İndir</span>
+        </button>
+        <button mat-menu-item (click)="exportToPDF()">
+          <mat-icon class="icon-pdf">picture_as_pdf</mat-icon>
+          <span>PDF İndir</span>
+        </button>
+      </mat-menu>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <mat-card class="filters-card">
+    <mat-card-content>
+      <div class="filters-container">
+        <!-- Search -->
+        <mat-form-field class="filter-field search-field" appearance="outline">
+          <mat-label class="font-medium">Ara...</mat-label>
+          <input matInput [formControl]="searchControl" placeholder="Konudan arama yap...">
+          <mat-icon matPrefix>search</mat-icon>
+        </mat-form-field>
+
+        <!-- Status Filter -->
+        <mat-form-field class="filter-field" appearance="outline">
+          <mat-label class="font-medium">Durum</mat-label>
+          <mat-select [value]="statusFilter()" (selectionChange)="onStatusFilterChange($event.value)">
+            @for (option of statusOptions; track option.value) {
+              <mat-option [value]="option.value">{{ option.label }}</mat-option>
+            }
+          </mat-select>
+          <mat-icon matPrefix>filter_list</mat-icon>
+        </mat-form-field>
+
+        <!-- Date Range -->
+        <mat-form-field class="filter-field" appearance="outline">
+          <mat-label class="font-medium">Başlangıç Tarihi</mat-label>
+          <input matInput [matDatepicker]="startPicker" [(ngModel)]="startDateFilter" (dateChange)="onDateRangeChange()">
+          <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+          <mat-datepicker #startPicker></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field class="filter-field" appearance="outline">
+          <mat-label class="font-medium">Bitiş Tarihi</mat-label>
+          <input matInput [matDatepicker]="endPicker" [(ngModel)]="endDateFilter" (dateChange)="onDateRangeChange()">
+          <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+          <mat-datepicker #endPicker></mat-datepicker>
+        </mat-form-field>
+
+        <!-- Filter Actions -->
+        <div class="filter-actions">
+          @if (user() && user()!.role === 'ADMIN') {
+            <button mat-button (click)="toggleOnlyMine()" [class.active]="onlyMineFilter()">
+              <mat-icon>person</mat-icon>
+              Sadece Benimkiler
+            </button>
+          }
+
+          <button mat-button (click)="clearFilters()" class="clear-button">
+            <mat-icon>clear</mat-icon>
+            Temizle
+          </button>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- View Toggle & Results Info -->
+  <div class="toolbar">
+    <div class="results-info">
+      @if (loading()) {
+        <span>Yükleniyor...</span>
+      } @else {
+        <span><strong>{{ totalCount() }}</strong> duyuru bulundu</span>
+      }
+    </div>
+
+    <mat-button-toggle-group [value]="viewMode()" (change)="toggleViewMode()">
+      <mat-button-toggle value="table">
+        <mat-icon>table_rows</mat-icon>
+        Tablo
+      </mat-button-toggle>
+      <mat-button-toggle value="card">
+        <mat-icon>grid_view</mat-icon>
+        Kart
+      </mat-button-toggle>
+    </mat-button-toggle-group>
+  </div>
+
+  <!-- Loading Spinner -->
+  @if (loading()) {
+    <app-loading message="Duyurular yükleniyor..." />
+  }
+
+  <!-- Table View -->
+  @if (!loading() && viewMode() === 'table') {
+    <div class="table-container">
+      <table mat-table [dataSource]="filteredAnnouncements()" class="announcements-table">
+
+        <!-- Title Column -->
+        <ng-container matColumnDef="konu">
+          <th mat-header-cell *matHeaderCellDef>Konu</th>
+          <td mat-cell *matCellDef="let row" class="title-cell">
+            <div class="title-content" [matTooltip]="row.konu.length > 100 ? row.konu : ''">
+              <strong>{{ truncateText(row.konu, 80) }}</strong>
+              @if (row.dosyaSayisi > 0) {
+                <mat-icon class="attachment-icon" matTooltip="{{ row.dosyaSayisi }} dosya">attach_file</mat-icon>
+              }
+            </div>
+            <div class="content-preview">{{ truncateText(row.icerik, 80) }}</div>
+          </td>
+        </ng-container>
+
+        <!-- Status Column -->
+        <ng-container matColumnDef="durum">
+          <th mat-header-cell *matHeaderCellDef>Durum</th>
+          <td mat-cell *matCellDef="let row">
+            @if (row.zamanlanmisMi) {
+              <mat-icon
+                class="schedule-icon icon-warning mr-sm align-middle"
+                [matTooltip]="row.zamanlamaSayisi + ' zamanlama var'">
+                schedule
+              </mat-icon>
+            }
+            <mat-chip
+              [class]="'status-chip status-' + getStatusColor(row.durum)"
+              [matTooltip]="getStatusTooltip(row)"
+              [matTooltipDisabled]="!getStatusTooltip(row)"
+              matTooltipPosition="above">
+              <mat-icon class="chip-icon">{{ getStatusIcon(row.durum) }}</mat-icon>
+              {{ getStatusLabel(row.durum) }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <!-- Created By Column -->
+        <ng-container matColumnDef="olusturanKullaniciAdi">
+          <th mat-header-cell *matHeaderCellDef>Oluşturan</th>
+          <td mat-cell *matCellDef="let row">
+            <div class="user-info">
+              <mat-icon class="user-icon">person</mat-icon>
+              {{ row.olusturanKullaniciAdi }}
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Created Date Column -->
+        <ng-container matColumnDef="olusturmaTarihi">
+          <th mat-header-cell *matHeaderCellDef>Oluşturma Tarihi</th>
+          <td mat-cell *matCellDef="let row">
+            <div class="date-info">
+              <mat-icon class="date-icon">calendar_today</mat-icon>
+              {{ formatDate(row.olusturmaTarihi) }}
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Recipients Count Column -->
+        <ng-container matColumnDef="aliciSayisi">
+          <th mat-header-cell *matHeaderCellDef>Alıcı Sayısı</th>
+          <td mat-cell *matCellDef="let row">
+            <mat-chip class="count-chip">
+              <mat-icon class="chip-icon">people</mat-icon>
+              {{ row.toplamAliciSayisi }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>İşlemler</th>
+          <td mat-cell *matCellDef="let row" (click)="$event.stopPropagation()">
+            <div class="action-buttons">
+              <button mat-mini-fab color="accent"
+                      class="action-btn action-btn-view"
+                      (click)="openPreview(row.id)"
+                      matTooltip="Görüntüle"
+                      matTooltipPosition="above">
+                <mat-icon>visibility</mat-icon>
+              </button>
+
+              @if (canEdit(row)) {
+                <button mat-mini-fab color="primary"
+                        class="action-btn action-btn-edit"
+                        (click)="editAnnouncement(row.id)"
+                        matTooltip="Düzenle"
+                        matTooltipPosition="above">
+                  <mat-icon>edit</mat-icon>
+                </button>
+              }
+
+              @if (canApprove(row)) {
+                <button mat-mini-fab
+                        class="action-btn action-btn-approve"
+                        (click)="goToApprovals()"
+                        matTooltip="Onayla"
+                        matTooltipPosition="above">
+                  <mat-icon>check_circle</mat-icon>
+                </button>
+              }
+              @if (row.durum !== 'TASLAK' && !isViewer()) {
+              <button mat-mini-fab
+                      class="action-btn action-btn-duplicate"
+                      (click)="duplicateAnnouncement(row.id)"
+                      [matTooltip]="getDuplicateButtonText()"
+                      matTooltipPosition="above">
+                <mat-icon>{{ getDuplicateButtonIcon() }}</mat-icon>
+              </button>
+            }
+
+              @if (canDelete(row)) {
+                <button mat-mini-fab color="warn"
+                        class="action-btn action-btn-delete"
+                        (click)="deleteAnnouncement(row.id)"
+                        matTooltip="Sil"
+                        matTooltipPosition="above">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              }
+
+              <button mat-mini-fab
+                      class="action-btn action-btn-history"
+                      (click)="viewHistory(row.id)"
+                      matTooltip="Duyuru Geçmişi"
+                      matTooltipPosition="above">
+                <mat-icon>history</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns();"
+            class="table-row"
+            (click)="viewDetails(row.id)"></tr>
+
+        <!-- No data row -->
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" [attr.colspan]="displayedColumns().length">
+            <app-empty-state
+              icon="inbox"
+              title="Duyuru Bulunamadı"
+              description="Filtrelere uygun duyuru bulunmuyor"
+            />
+          </td>
+        </tr>
+      </table>
+    </div>
+  }
+
+  <!-- Card View -->
+  @if (!loading() && viewMode() === 'card') {
+    <div class="cards-container">
+      @if (announcements().length === 0) {
+        <div class="empty-state">
+          <mat-icon>info</mat-icon>
+          <p>Duyuru bulunamadı</p>
+        </div>
+      }
+
+      @for (announcement of filteredAnnouncements(); track announcement.id) {
+        <mat-card class="announcement-card" (click)="viewDetails(announcement.id)">
+          <mat-card-header>
+            <div class="card-header-content">
+              <div class="card-title-section">
+                <mat-card-title [matTooltip]="announcement.konu.length > 100 ? announcement.konu : ''">
+                  {{ truncateText(announcement.konu, 80) }}
+                  @if (announcement.dosyaVarMi) {
+                    <mat-icon class="attachment-badge" [matBadge]="announcement.dosyaSayisi">attach_file</mat-icon>
+                  }
+                </mat-card-title>
+                <mat-chip [class]="'status-chip status-' + getStatusColor(announcement.durum)">
+                  <mat-icon class="chip-icon">{{ getStatusIcon(announcement.durum) }}</mat-icon>
+                  {{ getStatusLabel(announcement.durum) }}
+                </mat-chip>
+              </div>
+            </div>
+          </mat-card-header>
+
+          <mat-card-content>
+            <p class="card-content">{{ truncateText(announcement.icerik, 100) }}</p>
+
+            <div class="card-meta">
+              <div class="meta-item">
+                <mat-icon>person</mat-icon>
+                <span>{{ announcement.olusturanKullaniciAdi }}</span>
+              </div>
+
+              <div class="meta-item">
+                <mat-icon>calendar_today</mat-icon>
+                <span>{{ formatDate(announcement.olusturmaTarihi) }}</span>
+              </div>
+
+              <div class="meta-item">
+                <mat-icon>people</mat-icon>
+                <span>{{ announcement.toplamAliciSayisi }} alıcı</span>
+              </div>
+            </div>
+
+            @if (announcement.zamanlanmisTarih) {
+              <div class="scheduled-badge">
+                <mat-icon>schedule</mat-icon>
+                <span>Zamanlanmış: {{ formatDate(announcement.zamanlanmisTarih) }}</span>
+              </div>
+            }
+
+            @if (announcement.gonderimTarihi) {
+              <div class="sent-info">
+                <mat-icon>check_circle</mat-icon>
+                <span>Gönderildi: {{ formatDate(announcement.gonderimTarihi) }}</span>
+                @if (announcement.basariliGonderimSayisi !== undefined) {
+                  <span class="success-count">✓ {{ announcement.basariliGonderimSayisi }}</span>
+                }
+                @if (announcement.basarisizGonderimSayisi !== undefined && announcement.basarisizGonderimSayisi > 0) {
+                  <span class="failed-count">✗ {{ announcement.basarisizGonderimSayisi }}</span>
+                }
+              </div>
+            }
+
+            @if (announcement.durum === 'REDDEDILDI' && announcement.redNedeni) {
+              <div class="rejection-reason">
+                <mat-icon>error</mat-icon>
+                <span><strong>Red Nedeni:</strong> {{ announcement.redNedeni }}</span>
+              </div>
+            }
+          </mat-card-content>
+
+          <mat-card-actions (click)="$event.stopPropagation()">
+            <div class="card-action-buttons">
+              <button mat-mini-fab color="accent"
+                      class="action-btn action-btn-view"
+                      (click)="openPreview(announcement.id)"
+                      matTooltip="Görüntüle"
+                      matTooltipPosition="above">
+                <mat-icon>visibility</mat-icon>
+              </button>
+
+              @if (canEdit(announcement)) {
+                <button mat-mini-fab color="primary"
+                        class="action-btn action-btn-edit"
+                        (click)="editAnnouncement(announcement.id)"
+                        matTooltip="Düzenle"
+                        matTooltipPosition="above">
+                  <mat-icon>edit</mat-icon>
+                </button>
+              }
+
+              @if (canApprove(announcement)) {
+                <button mat-mini-fab
+                        class="action-btn action-btn-approve"
+                        (click)="goToApprovals()"
+                        matTooltip="Onayla"
+                        matTooltipPosition="above">
+                  <mat-icon>check_circle</mat-icon>
+                </button>
+              }
+
+              @if (announcement.durum !== 'TASLAK') {
+              <button mat-mini-fab
+                      class="action-btn action-btn-duplicate"
+                      (click)="duplicateAnnouncement(announcement.id)"
+                      [matTooltip]="getDuplicateButtonText()"
+                      matTooltipPosition="above">
+                <mat-icon>{{ getDuplicateButtonIcon() }}</mat-icon>
+              </button>
+            }
+
+              @if (canDelete(announcement)) {
+                <button mat-mini-fab color="warn"
+                        class="action-btn action-btn-delete"
+                        (click)="deleteAnnouncement(announcement.id)"
+                        matTooltip="Sil"
+                        matTooltipPosition="above">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              }
+            </div>
+          </mat-card-actions>
+        </mat-card>
+      }
+    </div>
+  }
+
+  <!-- Pagination -->
+  @if (!loading() && announcements().length > 0) {
+    <mat-paginator
+      [length]="totalCount()"
+      [pageSize]="pageSize()"
+      [pageSizeOptions]="pageSizeOptions"
+      [pageIndex]="currentPage() - 1"
+      (page)="onPageChange($event)"
+      showFirstLastButtons>
+    </mat-paginator>
+  }
+</div>

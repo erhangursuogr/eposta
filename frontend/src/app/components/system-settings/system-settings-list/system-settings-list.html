@@ -1,0 +1,260 @@
+<div class="page-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <mat-icon class="title-icon">tune</mat-icon>
+        Sistem Ayarları
+      </h1>
+      <p class="page-description">Sistem genelindeki tüm ayarları yönetin ve düzenleyin</p>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button (click)="toggleSecretSettings()" [class.active]="showSecretSettings()">
+        <mat-icon>{{ showSecretSettings() ? 'visibility_off' : 'visibility' }}</mat-icon>
+        {{ showSecretSettings() ? 'Gizli Ayarları Gizle' : 'Gizli Ayarları Göster' }}
+      </button>
+      <button mat-raised-button color="accent" (click)="exportSettings()">
+        <mat-icon>download</mat-icon>
+        Dışa Aktar
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Dashboard -->
+  <div class="settings-stats">
+    <div class="stat-card primary-card">
+      <div class="stat-icon-wrapper primary-icon">
+        <mat-icon>settings</mat-icon>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Toplam Ayar</div>
+        <div class="stat-value">{{ totalSettingsCount() }}</div>
+      </div>
+    </div>
+
+    <div class="stat-card success-card">
+      <div class="stat-icon-wrapper success-icon">
+        <mat-icon>check_circle</mat-icon>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Aktif Ayarlar</div>
+        <div class="stat-value">{{ activeSettingsCount() }}</div>
+      </div>
+    </div>
+
+    <div class="stat-card warning-card">
+      <div class="stat-icon-wrapper warning-icon">
+        <mat-icon>lock</mat-icon>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Gizli Ayarlar</div>
+        <div class="stat-value">{{ secretSettingsCount() }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search & Filters -->
+  <div class="filters-section">
+    <div class="filter-row">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Ayar Ara</mat-label>
+        <input matInput placeholder="Ayar adı, açıklama veya değer..." (input)="onSearch($event)" [value]="searchTerm()">
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+
+      <div class="filter-stats">
+        <div class="stat-badge">
+          <mat-icon>category</mat-icon>
+          <span>{{ filteredCategories().length }} Kategori</span>
+        </div>
+        <div class="stat-badge">
+          <mat-icon>settings</mat-icon>
+          <span>{{ totalSettingsCount() }} Ayar</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  @if (loading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="50"></mat-spinner>
+      <p>Ayarlar yükleniyor...</p>
+    </div>
+  }
+
+  <!-- Empty State -->
+  @if (!loading() && filteredCategories().length === 0) {
+    <mat-card class="empty-state">
+      <mat-icon class="empty-icon">settings_suggest</mat-icon>
+      <h2>Ayar Bulunamadı</h2>
+      <p>Arama kriterlerinize uygun sistem ayarı bulunamadı.</p>
+      <button mat-raised-button color="primary" (click)="searchTerm.set(''); loadSettings()">
+        <mat-icon>refresh</mat-icon>
+        Filtreyi Temizle
+      </button>
+    </mat-card>
+  }
+
+  <!-- Settings Categories -->
+  @if (!loading() && filteredCategories().length > 0) {
+    <div class="categories-container">
+      @for (category of filteredCategories(); track trackByCategory($index, category)) {
+        <div class="category-card" [class.expanded]="category.isExpanded">
+          <!-- Card Header -->
+          <div class="category-card-header" (click)="toggleCategory(category)">
+            <div class="header-left">
+              <div class="category-icon-wrapper" [ngClass]="'color-' + category.color">
+                <mat-icon>{{ category.icon }}</mat-icon>
+              </div>
+              <div class="category-info">
+                <h3 class="category-title">{{ category.displayName }}</h3>
+                <span class="category-count">{{ category.settings.length }} ayar</span>
+              </div>
+            </div>
+
+            <div class="header-right">
+              @if (hasChanges(category.category)) {
+                <span class="changes-badge">
+                  <mat-icon class="badge-icon">edit</mat-icon>
+                  Değiştirildi
+                </span>
+              }
+              <mat-icon class="expand-icon">
+                {{ category.isExpanded ? 'expand_less' : 'expand_more' }}
+              </mat-icon>
+            </div>
+          </div>
+
+          <!-- Card Content -->
+          @if (category.isExpanded) {
+            @if (getCategoryForm(category.category); as form) {
+              <div class="category-card-content">
+                <form [formGroup]="form" class="settings-form">
+                <div class="settings-grid">
+                  @for (setting of category.settings; track trackBySetting($index, setting)) {
+                    <div class="setting-item" [class.secret-setting]="setting.gizli === 'Y'">
+                      <!-- Setting Header -->
+                      <div class="setting-header">
+                        <label class="setting-label">
+                          {{ setting.key }}
+                          @if (setting.aktif === 'N') {
+                            <mat-chip class="inactive-chip">Pasif</mat-chip>
+                          }
+                          @if (setting.gizli === 'Y') {
+                            <mat-chip class="secret-chip">
+                              <mat-icon>lock</mat-icon>
+                              Gizli
+                            </mat-chip>
+                          }
+                        </label>
+                        <div class="setting-actions">
+                          <button mat-icon-button matTooltip="Düzenle" (click)="openEditDialog(setting)" type="button" color="primary">
+                            <mat-icon>edit</mat-icon>
+                          </button>
+                        </div>
+                      </div>
+
+                      <!-- Setting Input -->
+                      @if (isTextarea(setting)) {
+                        <mat-form-field appearance="outline" class="full-width">
+                          <mat-label>{{ setting.description }}</mat-label>
+                          <textarea
+                            matInput
+                            [formControlName]="setting.key"
+                            rows="4"
+                            [placeholder]="setting.description"
+                          ></textarea>
+                          @if (getHintText(setting)) {
+                            <mat-hint>{{ getHintText(setting) }}</mat-hint>
+                          }
+                        </mat-form-field>
+                      } @else {
+                        <mat-form-field appearance="outline" class="full-width">
+                          <mat-label>{{ setting.description }}</mat-label>
+                          <input
+                            matInput
+                            [type]="getInputType(setting)"
+                            [formControlName]="setting.key"
+                            [placeholder]="setting.description"
+                          >
+                          @if (setting.gizli === 'Y' && form.get(setting.key)?.value) {
+                            <button mat-icon-button matSuffix type="button"
+                              [matTooltip]="getInputType(setting) === 'password' ? 'Göster' : 'Gizle'"
+                              (click)="$event.preventDefault()">
+                              <mat-icon>{{ getInputType(setting) === 'password' ? 'visibility' : 'visibility_off' }}</mat-icon>
+                            </button>
+                          }
+                          @if (getHintText(setting)) {
+                            <mat-hint>{{ getHintText(setting) }}</mat-hint>
+                          }
+                        </mat-form-field>
+                      }
+
+                      <!-- Current Value Display -->
+                      @if (form.get(setting.key)?.dirty) {
+                        <div class="value-change-indicator">
+                          <mat-icon class="change-icon">swap_horiz</mat-icon>
+                          <span class="old-value">{{ setting.value || '(boş)' }}</span>
+                          <mat-icon>arrow_forward</mat-icon>
+                          <span class="new-value">{{ form.get(setting.key)?.value || '(boş)' }}</span>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+
+                <!-- Category Actions -->
+                <div class="category-actions">
+                  <button
+                    mat-raised-button
+                    type="button"
+                    (click)="resetCategory(category)"
+                    [disabled]="!hasChanges(category.category) || saving()"
+                  >
+                    <mat-icon>undo</mat-icon>
+                    Değişiklikleri Geri Al
+                  </button>
+
+                  <button
+                    mat-raised-button
+                    color="primary"
+                    type="button"
+                    (click)="saveCategory(category)"
+                    [disabled]="!hasChanges(category.category) || saving() || !form.valid"
+                  >
+                    @if (saving()) {
+                      <mat-spinner diameter="20" class="button-spinner"></mat-spinner>
+                    } @else {
+                      <mat-icon>save</mat-icon>
+                    }
+                    Kaydet
+                  </button>
+                </div>
+                </form>
+              </div>
+            }
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Info Card -->
+  <mat-card class="info-card">
+    <mat-icon class="info-icon">info</mat-icon>
+    <div class="info-content">
+      <h3>Önemli Notlar</h3>
+      <ul>
+        <li><strong>Teknik Ayarlar:</strong> Bu sayfa sadece sistem altyapısı ile ilgili teknik ayarları içerir.</li>
+        <li><strong>Email Ayarları:</strong> Email kategorileri ve SMTP grupları için ayrı yönetim sayfaları kullanın (Sistem Yönetimi menüsü altında).</li>
+        <li><strong>Gizli Ayarlar:</strong> Şifreler ve hassas veriler için "Gizli Ayarları Göster" butonunu kullanın.</li>
+        <li><strong>DEBIS Servisi:</strong> LDAP authentication için DEBIS SOAP web servisi kullanılır.</li>
+        <li><strong>Cache Ayarları:</strong> Email config ve kullanıcı verisi cache süreleri dakika cinsinden.</li>
+        <li><strong>Dosya Ayarları:</strong> Maksimum dosya boyutu, izin verilen uzantılar ve yükleme dizini ayarları.</li>
+        <li><strong>Güvenlik:</strong> Email domain kısıtlamaları SECURITY_DOMAIN kategorisinde yönetilir.</li>
+        <li><strong>Değişiklikler:</strong> Ayarları değiştirdikten sonra mutlaka "Kaydet" butonuna basın.</li>
+      </ul>
+    </div>
+  </mat-card>
+</div>

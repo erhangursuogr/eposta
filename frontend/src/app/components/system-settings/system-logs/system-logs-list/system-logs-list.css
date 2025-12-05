@@ -1,0 +1,353 @@
+/* Component uses global .page-container, .page-header, .page-title from components.css */
+
+/* Header content wrapper */
+.header-content {
+  flex: 1;
+}
+
+/* Tabs - Enhanced Design */
+::ng-deep .mat-mdc-tab-group {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--border-color);
+}
+
+::ng-deep .mat-mdc-tab-labels {
+  background: linear-gradient(to bottom, var(--bg-card), var(--bg-hover));
+  border-bottom: 2px solid var(--border-color);
+  padding: var(--space-xs) var(--space-md);
+}
+
+::ng-deep .mat-mdc-tab {
+  min-width: 120px;
+  opacity: 0.7;
+  transition: all 0.3s ease;
+}
+
+::ng-deep .mat-mdc-tab:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.02);
+}
+
+::ng-deep .mat-mdc-tab.mdc-tab--active {
+  opacity: 1;
+}
+
+::ng-deep .mat-mdc-tab .mdc-tab__text-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.2px;
+}
+
+::ng-deep .mdc-tab-indicator__content--underline {
+  border-top-width: 3px;
+  border-radius: 2px 2px 0 0;
+}
+
+.tab-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.tab-content {
+  padding: var(--space-xl);
+  background: var(--bg-card);
+}
+
+/* Filters - Modern Card Design */
+.filters-card {
+  background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-hover) 100%);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  margin-bottom: var(--space-lg);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+
+::ng-deep .filters-card .mat-mdc-form-field {
+  width: 100%;
+}
+
+::ng-deep .filters-card .mat-mdc-text-field-wrapper {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+}
+
+.filter-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--border-color);
+  margin-top: var(--space-md);
+}
+
+::ng-deep .filter-actions .mat-mdc-checkbox {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.action-buttons {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.action-buttons button {
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  padding: 0 var(--space-lg);
+  transition: all 0.2s ease;
+}
+
+.action-buttons button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Table - Simple & Clean */
+.table-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+::ng-deep .mat-mdc-table {
+  width: 100%;
+  background: transparent;
+}
+
+::ng-deep .mat-mdc-header-row {
+  background: var(--bg-hover);
+}
+
+::ng-deep .mat-mdc-header-cell {
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid var(--border-color);
+}
+
+::ng-deep .mat-mdc-cell {
+  color: var(--text-primary);
+  font-size: 14px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+::ng-deep .mat-mdc-row:hover {
+  background: var(--bg-hover);
+}
+
+/* Loading state - uses global .loading-state from components.css but with animation */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xxl);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+}
+
+.loading-state mat-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  margin-bottom: var(--space-md);
+  color: var(--text-tertiary);
+}
+
+.loading-state p {
+  margin: 0;
+  font-size: 14px;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Cell Styles */
+.user-cell,
+.subject-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.user-cell mat-icon,
+.subject-cell mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: var(--text-tertiary);
+}
+
+/* Badges */
+.ip-badge,
+.type-badge,
+.category-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.log-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.log-trace {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.log-debug {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.log-info {
+  background: #dbeafe;
+  color: #1e3a8a;
+}
+
+.log-warning {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.log-error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.log-critical {
+  background: #fecaca;
+  color: #7f1d1d;
+  font-weight: 700;
+}
+
+/* Status */
+.status-success,
+.status-error {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-success {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-success mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: #059669;
+}
+
+.status-error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.status-error mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: #dc2626;
+}
+
+/* Error text */
+.error-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--error);
+  font-size: 13px;
+}
+
+.error-text mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .tab-content {
+    padding: var(--space-md);
+  }
+
+  .filters-card {
+    padding: var(--space-md);
+  }
+
+  .filters-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+  }
+
+  .filter-actions {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
+  }
+
+  .action-buttons {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .action-buttons button {
+    width: 100%;
+  }
+
+  ::ng-deep .mat-mdc-table {
+    font-size: 12px;
+  }
+
+  ::ng-deep .mat-mdc-header-cell,
+  ::ng-deep .mat-mdc-cell {
+    padding: 8px;
+  }
+}

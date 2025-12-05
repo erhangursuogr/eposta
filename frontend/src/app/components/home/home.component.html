@@ -1,0 +1,288 @@
+<div class="dashboard-container">
+  <!-- Quick Actions Bar -->
+  <div class="quick-actions-bar">
+    <div class="quick-actions-content">
+      <h2 class="welcome-title">
+        <mat-icon>waving_hand</mat-icon>
+        Hoş Geldiniz, {{ user().name }}!
+      </h2>
+      <div class="quick-action-buttons">
+        @if (user().role === 'ADMIN' || user().role === 'MANAGER' || user().role === 'EDITOR') {
+          <button mat-raised-button color="primary" (click)="goToNewAnnouncement()">
+            <mat-icon>add_circle</mat-icon>
+            Yeni Duyuru
+          </button>
+        }
+        @if (user().role === 'ADMIN') {
+          <button mat-raised-button (click)="goToUserManagement()">
+            <mat-icon>person_add</mat-icon>
+            Kullanıcı Ekle
+          </button>
+        }
+        @if (user().role === 'ADMIN' || user().role === 'MANAGER') {
+          <button mat-raised-button (click)="goToPendingApprovals()">
+            <mat-icon [matBadge]="stats()?.pendingAnnouncements || 0" matBadgeColor="warn" [matBadgeHidden]="!stats()?.pendingAnnouncements" aria-hidden="false">
+              pending_actions
+            </mat-icon>
+            Onay Bekleyenler
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistics Grid -->
+  <div class="stats-grid">
+    <app-stat-card
+      [title]="'Toplam Duyuru'"
+      [value]="stats()?.totalAnnouncements || 0"
+      [icon]="'campaign'"
+      [color]="'primary'"
+      [loading]="loading()"
+      [clickable]="true"
+      (cardClick)="goToAnnouncements()"
+    />
+
+    <app-stat-card
+      [title]="'Taslaklar'"
+      [value]="stats()?.draftAnnouncements || 0"
+      [icon]="'drafts'"
+      [color]="'info'"
+      [loading]="loading()"
+      [clickable]="true"
+      (cardClick)="goToAnnouncements()"
+    />
+
+    <app-stat-card
+      [title]="'Onay Bekleyen'"
+      [value]="stats()?.pendingAnnouncements || 0"
+      [icon]="'pending_actions'"
+      [color]="'warn'"
+      [loading]="loading()"
+      [clickable]="true"
+      (cardClick)="goToPendingApprovals()"
+    />
+
+    <app-stat-card
+      [title]="'Onaylanmış'"
+      [value]="stats()?.approvedAnnouncements || 0"
+      [icon]="'check_circle'"
+      [color]="'success'"
+      [loading]="loading()"
+      [clickable]="true"
+      (cardClick)="goToAnnouncements()"
+    />
+
+    <app-stat-card
+      [title]="'Gönderildi'"
+      [value]="stats()?.sentAnnouncements || 0"
+      [icon]="'send'"
+      [color]="'success'"
+      [loading]="loading()"
+      [clickable]="true"
+      (cardClick)="goToSendAnnouncements()"
+    />
+
+    <app-stat-card
+      [title]="'Aktif Gruplar'"
+      [value]="stats()?.activeGroups || 0"
+      [icon]="'groups'"
+      [color]="'primary'"
+      [loading]="loading()"
+      [clickable]="true"
+      (cardClick)="goToGroups()"
+    />
+
+    <app-stat-card
+      [title]="'Toplam Kullanıcı'"
+      [value]="stats()?.totalUsers || 0"
+      [icon]="'people'"
+      [color]="'accent'"
+      [loading]="loading()"
+      [clickable]="true"
+      (cardClick)="goToUsers()"
+    />
+
+    <app-stat-card
+      [title]="'Bugünkü Aktivite'"
+      [value]="stats()?.todayAnnouncements || 0"
+      [icon]="'today'"
+      [color]="'info'"
+      [subtitle]="(stats()?.todayLogins || 0) + ' giriş'"
+      [loading]="loading()"
+      [clickable]="true"
+      (cardClick)="goToActivityLogs()"
+    />
+  </div>
+
+  <!-- Widgets Row -->
+  <div class="widgets-row">
+    <!-- Recent Activities Widget -->
+    <mat-card class="widget-card activities-widget">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>history</mat-icon>
+          Son Aktiviteler
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        @if (recentActivities().length === 0) {
+          <app-empty-state
+            icon="history"
+            title="Henüz Aktivite Bulunmuyor"
+          />
+        } @else {
+          <div class="activities-list">
+            @for (activity of recentActivities(); track $index) {
+              <div class="activity-item">
+                <div class="activity-avatar">
+                  <mat-icon [color]="getActivityColor(activity.type)">
+                    {{ getActivityIcon(activity.type) }}
+                  </mat-icon>
+                </div>
+                <div class="activity-content">
+                  <p class="activity-description">{{ activity.description }}</p>
+                  <span class="activity-time">{{ formatDate(activity.date) }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Group Statistics Widget -->
+    <mat-card class="widget-card groups-widget">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>groups</mat-icon>
+          En Çok Kullanılan Gruplar
+        </mat-card-title>
+        <button mat-icon-button (click)="goToGroups()">
+          <mat-icon>arrow_forward</mat-icon>
+        </button>
+      </mat-card-header>
+      <mat-card-content>
+        @if (groupStats().length === 0) {
+          <app-empty-state
+            icon="groups"
+            title="Henüz Grup Bulunmuyor"
+          />
+        } @else {
+          <div class="groups-list">
+            @for (group of groupStats(); track group.groupId) {
+              <div class="group-item">
+                <div class="group-header">
+                  <div class="group-info">
+                    <span class="group-name">{{ group.groupName }}</span>
+                    <mat-chip class="group-type-chip" [color]="getGroupTypeColor(group.groupType)">
+                      {{ getGroupTypeLabel(group.groupType) }}
+                    </mat-chip>
+                  </div>
+                  <span class="group-member-count">{{ group.memberCount }} üye</span>
+                </div>
+                <div class="group-progress">
+                  <div class="progress-bar">
+                    <div class="progress-fill" [style.width.%]="(group.announcementCount / (stats()?.totalAnnouncements || 1)) * 100"></div>
+                  </div>
+                  <span class="progress-label">{{ group.announcementCount }} duyuru</span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Bottom Row -->
+  <div class="widgets-row">
+    <!-- Top Users Widget -->
+    <mat-card class="widget-card users-widget">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>star</mat-icon>
+          En Aktif Kullanıcılar
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        @if (topUsers().length === 0) {
+          <app-empty-state
+            icon="people"
+            title="Henüz Kullanıcı Aktivitesi Bulunmuyor"
+          />
+        } @else {
+          <div class="users-list">
+            @for (topUser of topUsers(); track topUser.userId; let index = $index) {
+              <div class="user-item">
+                <div class="user-rank">{{ index + 1 }}</div>
+                <div class="user-avatar">{{ getUserInitials(topUser.userName) }}</div>
+                <div class="user-details">
+                  <span class="user-name">{{ topUser.userName }}</span>
+                  <span class="user-email">{{ topUser.email }}</span>
+                </div>
+                <div class="user-stats">
+                  <mat-chip class="stat-chip">
+                    <mat-icon>campaign</mat-icon>
+                    {{ topUser.announcementCount }}
+                  </mat-chip>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
+
+    <!-- System Health Widget (ADMIN Only) -->
+    @if (user().role === 'ADMIN' && systemHealth()) {
+      <mat-card class="widget-card health-widget">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>health_and_safety</mat-icon>
+            Sistem Sağlık Durumu
+          </mat-card-title>
+          <mat-chip [ngClass]="'health-' + systemHealth()!.overallStatus.toLowerCase()">
+            <mat-icon>{{ getHealthStatusIcon(systemHealth()!.overallStatus) }}</mat-icon>
+            {{ systemHealth()!.overallStatus }}
+          </mat-chip>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="health-items">
+            <div class="health-item">
+              <mat-icon [ngClass]="systemHealth()!.databaseStatus === 'HEALTHY' ? 'health-icon-success' : 'health-icon-error'">
+                {{ systemHealth()!.databaseStatus === 'HEALTHY' ? 'check_circle' : 'error' }}
+              </mat-icon>
+              <span>Veritabanı</span>
+            </div>
+            <div class="health-item">
+              <mat-icon [ngClass]="systemHealth()!.diskSpaceStatus === 'HEALTHY' ? 'health-icon-success' : 'health-icon-warning'">
+                {{ systemHealth()!.diskSpaceStatus === 'HEALTHY' ? 'check_circle' : 'warning' }}
+              </mat-icon>
+              <span>Disk Alan ({{ systemHealth()!.freeDiskSpaceGB }} GB)</span>
+            </div>
+            <div class="health-item">
+              <mat-icon [ngClass]="systemHealth()!.errorStatus === 'HEALTHY' ? 'health-icon-success' : 'health-icon-warning'">
+                {{ systemHealth()!.errorStatus === 'HEALTHY' ? 'check_circle' : 'warning' }}
+              </mat-icon>
+              <span>Hata Durumu ({{ systemHealth()!.recentErrorCount }} hata)</span>
+            </div>
+          </div>
+
+          @if (systemHealth()!.issues.length > 0) {
+            <mat-divider class="health-divider"></mat-divider>
+            <div class="health-issues">
+              <h4>Uyarılar:</h4>
+              @for (issue of systemHealth()!.issues; track issue) {
+                <div class="issue-item">
+                  <mat-icon>warning</mat-icon>
+                  <span>{{ issue }}</span>
+                </div>
+              }
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
+    }
+  </div>
+</div>

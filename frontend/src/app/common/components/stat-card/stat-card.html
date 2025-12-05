@@ -1,0 +1,30 @@
+<mat-card class="stat-card" [ngClass]="['stat-card-' + color(), clickable() ? 'stat-card-clickable' : '']" (click)="onCardClick()">
+  <mat-card-content>
+    <div class="stat-card-header">
+      <div class="stat-icon" [ngClass]="'stat-icon-' + color()">
+        <mat-icon>{{ icon() }}</mat-icon>
+      </div>
+      @if (trend() !== null) {
+        <div class="stat-trend" [ngClass]="trend()! >= 0 ? 'trend-up' : 'trend-down'">
+          <mat-icon>{{ trend()! >= 0 ? 'trending_up' : 'trending_down' }}</mat-icon>
+          <span>{{ trend()! >= 0 ? '+' : '' }}{{ trend() }}%</span>
+        </div>
+      }
+    </div>
+
+    <div class="stat-content">
+      @if (loading()) {
+        <div class="stat-skeleton">
+          <div class="skeleton-value"></div>
+          <div class="skeleton-title"></div>
+        </div>
+      } @else {
+        <h2 class="stat-value">{{ value() }}</h2>
+        <p class="stat-title">{{ title() }}</p>
+        @if (subtitle()) {
+          <p class="stat-subtitle">{{ subtitle() }}</p>
+        }
+      }
+    </div>
+  </mat-card-content>
+</mat-card>

@@ -1,0 +1,1998 @@
+{
+	"info": {
+		"_postman_id": "deu-eposta-complete-2025",
+		"name": "DEÜ Duyuru Yönetim Sistemi - TAM TEST KOLEKSİYONU",
+		"description": "## 🧪 DEÜ Duyuru Yönetim Sistemi - Tam Test Koleksiyonu\n\n### 📋 İçerik (14 Kategori, 81 Test):\n1. **Kimlik Doğrulama ve Yetkilendirme** - Giriş, Çıkış, Profil\n2. **E-Posta Grup Yönetimi** - CRUD + Üye Yönetimi\n3. **Duyuru İş Akışı** - Oluştur, Güncelle, Çoğalt, Sil\n4. **Alıcı Yönetimi** - Grup/Manuel Ekle/Çıkar + Önizleme\n5. **Onay Süreci** - Onaya Gönder, Onayla, Reddet\n6. **Gönderim** - Hemen Gönder, Zamanla, İptal, Yeniden Aktif Et\n7. **Dosya Yönetimi** - Yükle, İndir, Sil\n8. **Şablon Yönetimi** - Oluştur, Güncelle, Önizleme, Çoğalt, Aktif/Pasif Et\n9. **Raporlama ve Gösterge Paneli** - İstatistikler, Loglar, Dashboard\n10. **Güvenlik Testleri** - SQL Injection, XSS, Path Traversal\n11. **Kullanıcı Yönetimi** - Kullanıcı CRUD, İstatistikler, Onaylayıcılar, Oluştur\n12. **Sistem Ayarları** - E-posta Ayarları, Sistem Yapılandırması\n13. **Zamanlama Yönetimi** - Tekil/Toplu Zamanlama, İptal, Sil\n14. **Temizlik ve Son Testler** - Test verilerini temizle\n\n### 🔧 Kullanım:\n1. Environment oluştur: `baseUrl = http://localhost:5118`\n2. Collection Runner ile sırayla çalıştır\n3. Her test otomatik doğrulama içerir\n\n### 👥 Kullanıcı Rolleri:\n- **ADMIN**: Tüm yetkiler (sistem ayarları, kullanıcı yönetimi, duyuru yönetimi)\n- **MANAGER**: Duyuru onaylama/reddetme, grup yönetimi, duyuru oluşturma\n- **EDITOR**: Duyuru oluşturma, düzenleme (kendi), dosya yükleme\n- **VIEWER**: Sadece okuma yetkisi (duyuru görüntüleme)\n\n*Not: Kimlik doğrulama DEÜ LDAP üzerinden yapılır. JWT token süresi 12 saattir.*\n\n### ✅ Test Kapsamı:\n- Başarılı Senaryolar: ✓\n- Hata Durumları: ✓\n- Güvenlik: ✓\n- Sınır Durumları: ✓\n- Admin İşlemleri: ✓\n- İptal ve Yeniden Aktif Etme: ✓",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1️⃣ Kimlik Doğrulama ve Yetkilendirme",
+			"item": [
+				{
+					"name": "🔑 Giriş - Başarılı",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Response has token\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"    pm.expect(json.data.token).to.exist;",
+									"    pm.environment.set(\"token\", json.data.token);",
+									"    pm.environment.set(\"userId\", json.data.kullaniciId);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"email\": \"admin@deu.edu.tr\", \"password\": \"admin123\"}"
+						},
+						"url": {"raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login"]}
+					}
+				},
+				{
+					"name": "👤 Profil Bilgilerini Getir",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Profile data exists\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.data.email).to.exist;",
+									"    pm.expect(json.data.rol).to.exist;",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/auth/me", "host": ["{{baseUrl}}"], "path": ["api", "auth", "me"]}
+					}
+				},
+				{
+					"name": "❌ Giriş - Hatalı Kimlik Bilgileri",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 401 Unauthorized\", () => pm.response.to.have.status(401));",
+									"pm.test(\"Error message exists\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.false;",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"email\": \"admin@deu.edu.tr\", \"password\": \"wrongpassword\"}"
+						},
+						"url": {"raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login"]}
+					}
+				},
+				{
+					"name": "❌ Korumalı Endpoint - Token Yok",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 401 Unauthorized\", () => pm.response.to.have.status(401));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{baseUrl}}/api/announcements", "host": ["{{baseUrl}}"], "path": ["api", "announcements"]}
+					}
+				},
+				{
+					"name": "🚪 Çıkış",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/auth/logout", "host": ["{{baseUrl}}"], "path": ["api", "auth", "logout"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "2️⃣ E-Posta Grup Yönetimi - CRUD",
+			"item": [
+				{
+					"name": "📋 Tüm Grupları Listele",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Groups array exists\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.data).to.be.an('array');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/email-groups?page=1&pageSize=20", "host": ["{{baseUrl}}"], "path": ["api", "email-groups"], "query": [{"key": "page", "value": "1"}, {"key": "pageSize", "value": "20"}]}
+					}
+				},
+				{
+					"name": "➕ Normal Grup Oluştur",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Group created\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.data.id).to.exist;",
+									"    pm.environment.set(\"testGrupId\", json.data.id);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"grupAdi\": \"Test Grubu - Otomatik\", \"aciklama\": \"Postman test için oluşturuldu\", \"grupTipi\": \"NORMAL\"}"},
+						"url": {"raw": "{{baseUrl}}/api/email-groups", "host": ["{{baseUrl}}"], "path": ["api", "email-groups"]}
+					}
+				},
+				{
+					"name": "👥 Gruba Üye Ekle",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"email\": \"test@deu.edu.tr\", \"adSoyad\": \"Test User\", \"departman\": \"IT\"}"},
+						"url": {"raw": "{{baseUrl}}/api/email-groups/{{testGrupId}}/members", "host": ["{{baseUrl}}"], "path": ["api", "email-groups", "{{testGrupId}}", "members"]}
+					}
+				},
+				{
+					"name": "📊 Grup Detaylarını Getir",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Group has members\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.data.uyeler).to.be.an('array');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/email-groups/{{testGrupId}}", "host": ["{{baseUrl}}"], "path": ["api", "email-groups", "{{testGrupId}}"]}
+					}
+				},
+				{
+					"name": "✏️ Grubu Güncelle",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"grupAdi\": \"Test Grubu - Güncellenmiş\", \"aciklama\": \"Açıklama güncellendi\", \"grupTipi\": \"NORMAL\"}"},
+						"url": {"raw": "{{baseUrl}}/api/email-groups/{{testGrupId}}", "host": ["{{baseUrl}}"], "path": ["api", "email-groups", "{{testGrupId}}"]}
+					}
+				},
+				{
+					"name": "➕ Statik Grup Oluştur (Dosya İmport Testi İçin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Static group created\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.data.id).to.exist;",
+									"    pm.environment.set(\"staticGrupId\", json.data.id);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"grupAdi\": \"Statik Test Grubu\", \"aciklama\": \"Dosya import testi için\", \"grupTipi\": \"STATIK\"}"},
+						"url": {"raw": "{{baseUrl}}/api/email-groups", "host": ["{{baseUrl}}"], "path": ["api", "email-groups"]}
+					}
+				},
+				{
+					"name": "📤 Statik Gruba Dosyadan Üye Aktar (Excel/CSV/TXT)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Members imported successfully\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"    pm.expect(json.data.successCount).to.be.greaterThan(0);",
+									"    console.log('Import Sonucu:', json.data);",
+									"    console.log('Başarılı:', json.data.successCount);",
+									"    console.log('Başarısız:', json.data.failedCount);",
+									"    console.log('Duplicate:', json.data.duplicateCount);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": [],
+									"description": "Excel (.xlsx, .xls), CSV veya TXT dosyası seçin. Format: email,ad_soyad (CSV) veya tek sütun email (TXT) veya ilk sütun email ikinci sütun ad (Excel)"
+								}
+							]
+						},
+						"url": {"raw": "{{baseUrl}}/api/email-groups/{{staticGrupId}}/import-members", "host": ["{{baseUrl}}"], "path": ["api", "email-groups", "{{staticGrupId}}", "import-members"]}
+					}
+				},
+				{
+					"name": "🗑️ Grubu Sil",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/email-groups/{{testGrupId}}", "host": ["{{baseUrl}}"], "path": ["api", "email-groups", "{{testGrupId}}"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "3️⃣ Duyuru İş Akışı - Tam Döngü",
+			"item": [
+				{
+					"name": "📝 Taslak Duyuru Oluştur",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Announcement created as TASLAK\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.data.id).to.exist;",
+									"    pm.expect(json.data.durum).to.equal('TASLAK');",
+									"    pm.environment.set(\"testDuyuruId\", json.data.id);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"Test Duyurusu\", \"konu\": \"Test Konusu\", \"icerik\": \"<p>Test içerik</p>\", \"duyuruKategorisi\": \"PERSONEL\", \"onaylayanKullaniciId\": 2}"},
+						"url": {"raw": "{{baseUrl}}/api/announcements", "host": ["{{baseUrl}}"], "path": ["api", "announcements"]}
+					}
+				},
+				{
+					"name": "📋 Şablondan Duyuru Oluştur",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Announcement created from template\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.data.id).to.exist;",
+									"    pm.expect(json.data.sablonId).to.exist;",
+									"    pm.environment.set(\"templateBasedDuyuruId\", json.data.id);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"Şablondan Oluşturulan Duyuru\", \"sablonId\": {{templateId}}, \"duyuruKategorisi\": \"PERSONEL\", \"onaylayanKullaniciId\": 2}"},
+						"url": {"raw": "{{baseUrl}}/api/announcements", "host": ["{{baseUrl}}"], "path": ["api", "announcements"]}
+					}
+				},
+				{
+					"name": "🖼️ Banner ile Duyuru Oluştur",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Announcement created with banner\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.data.id).to.exist;",
+									"    pm.expect(json.data.bannerDosyaId).to.exist;",
+									"    pm.environment.set(\"bannerDuyuruId\", json.data.id);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"Banner'lı Duyuru\", \"konu\": \"Önemli Duyuru\", \"icerik\": \"<p>Bu duyuru banner görsel ile gönderilecek</p>\", \"bannerDosyaId\": {{uploadedFileId}}, \"duyuruKategorisi\": \"PERSONEL\", \"onaylayanKullaniciId\": 2}"},
+						"url": {"raw": "{{baseUrl}}/api/announcements", "host": ["{{baseUrl}}"], "path": ["api", "announcements"]}
+					}
+				},
+				{
+					"name": "✏️ Duyuruyu Güncelle",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\": \"Test Duyurusu - Güncellenmiş\", \"konu\": \"Test Konusu\", \"icerik\": \"<p>Test içerik güncellenmiş</p>\", \"duyuruKategorisi\": \"PERSONEL\", \"onaylayanKullaniciId\": 2}"},
+						"url": {"raw": "{{baseUrl}}/api/announcements/{{testDuyuruId}}", "host": ["{{baseUrl}}"], "path": ["api", "announcements", "{{testDuyuruId}}"]}
+					}
+				},
+				{
+					"name": "🔄 Duyurunun Onaylayıcısını Değiştir",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Approver changed successfully\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"    console.log('Yeni onaylayıcı ID: 3 olarak değiştirildi');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"Test Duyurusu - Güncellenmiş\", \"konu\": \"Test Konusu\", \"icerik\": \"<p>Test içerik</p>\", \"duyuruKategorisi\": \"PERSONEL\", \"onaylayanKullaniciId\": 3}"},
+						"url": {"raw": "{{baseUrl}}/api/announcements/{{testDuyuruId}}", "host": ["{{baseUrl}}"], "path": ["api", "announcements", "{{testDuyuruId}}"]}
+					}
+				},
+				{
+					"name": "📋 Duyuru Detaylarını Getir",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Announcement data exists\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.data.konu).to.exist;",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/announcements/{{testDuyuruId}}", "host": ["{{baseUrl}}"], "path": ["api", "announcements", "{{testDuyuruId}}"]}
+					}
+				},
+				{
+					"name": "📊 Duyuru İstatistiklerini Getir",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Statistics data exists\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.data).to.have.property('totalAnnouncements');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/announcements/statistics", "host": ["{{baseUrl}}"], "path": ["api", "announcements", "statistics"]}
+					}
+				},
+				{
+					"name": "📋 Tüm Duyuruları Listele",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Announcements array exists\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.data).to.be.an('array');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/announcements?page=1&pageSize=20", "host": ["{{baseUrl}}"], "path": ["api", "announcements"], "query": [{"key": "page", "value": "1"}, {"key": "pageSize", "value": "20"}]}
+					}
+				},
+				{
+					"name": "📑 Duyuruyu Çoğalt",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"New announcement created\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.data.id).to.exist;",
+									"    pm.environment.set(\"duplicatedDuyuruId\", json.data.id);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/announcements/{{testDuyuruId}}/duplicate", "host": ["{{baseUrl}}"], "path": ["api", "announcements", "{{testDuyuruId}}", "duplicate"]}
+					}
+				},
+				{
+					"name": "🗑️ Çoğaltılan Duyuruyu Sil",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/announcements/{{duplicatedDuyuruId}}", "host": ["{{baseUrl}}"], "path": ["api", "announcements", "{{duplicatedDuyuruId}}"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "4️⃣ Alıcı Yönetimi",
+			"item": [
+				{
+					"name": "📬 Duyuruya Grup Ekle",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/announcement-recipients/{{testDuyuruId}}/group/1?category=TO", "host": ["{{baseUrl}}"], "path": ["api", "announcement-recipients", "{{testDuyuruId}}", "group", "1"], "query": [{"key": "category", "value": "TO"}]}
+					}
+				},
+				{
+					"name": "➕ Manuel Alıcı Ekle (TO)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"email\": \"manuel@deu.edu.tr\", \"adSoyad\": \"Manuel Alıcı\", \"kategori\": \"TO\"}"},
+						"url": {"raw": "{{baseUrl}}/api/announcement-recipients/{{testDuyuruId}}/manual-recipient", "host": ["{{baseUrl}}"], "path": ["api", "announcement-recipients", "{{testDuyuruId}}", "manual-recipient"]}
+					}
+				},
+				{
+					"name": "➕ Manuel Alıcı Ekle (CC)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"email\": \"cc@deu.edu.tr\", \"adSoyad\": \"CC Alıcı\", \"kategori\": \"CC\"}"},
+						"url": {"raw": "{{baseUrl}}/api/announcement-recipients/{{testDuyuruId}}/manual-recipient", "host": ["{{baseUrl}}"], "path": ["api", "announcement-recipients", "{{testDuyuruId}}", "manual-recipient"]}
+					}
+				},
+				{
+					"name": "👁️ Alıcı Önizlemesi",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Preview data exists\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.data).to.have.property('totalRecipientCount');",
+									"    pm.expect(json.data).to.have.property('recipients');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/announcement-recipients/{{testDuyuruId}}/preview", "host": ["{{baseUrl}}"], "path": ["api", "announcement-recipients", "{{testDuyuruId}}", "preview"]}
+					}
+				},
+				{
+					"name": "📧 E-Posta Önizlemesi",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Email preview exists\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.data).to.have.property('subject');",
+									"    pm.expect(json.data).to.have.property('htmlContent');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/announcements/{{testDuyuruId}}/preview", "host": ["{{baseUrl}}"], "path": ["api", "announcements", "{{testDuyuruId}}", "preview"]}
+					}
+				},
+				{
+					"name": "🗑️ Alıcıyı Kaldır",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/announcement-recipients/{{testDuyuruId}}/recipient/cc@deu.edu.tr", "host": ["{{baseUrl}}"], "path": ["api", "announcement-recipients", "{{testDuyuruId}}", "recipient", "cc@deu.edu.tr"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "5️⃣ Onay İş Akışı",
+			"item": [
+				{
+					"name": "✅ Onaya Gönder",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Status changed to ONAY_BEKLIYOR\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/announcement-approval/{{testDuyuruId}}/submit", "host": ["{{baseUrl}}"], "path": ["api", "announcement-approval", "{{testDuyuruId}}", "submit"]}
+					}
+				},
+				{
+					"name": "📋 Onay Bekleyen Duyuruları Getir",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Pending list exists\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.data).to.be.an('array');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/announcement-approval/pending", "host": ["{{baseUrl}}"], "path": ["api", "announcement-approval", "pending"]}
+					}
+				},
+				{
+					"name": "✔️ Duyuruyu Onayla",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Announcement approved\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"note\": \"Test onay notu\"}"},
+						"url": {"raw": "{{baseUrl}}/api/announcement-approval/{{testDuyuruId}}/approve", "host": ["{{baseUrl}}"], "path": ["api", "announcement-approval", "{{testDuyuruId}}", "approve"]}
+					}
+				},
+				{
+					"name": "📋 Onaylanmış Duyuruları Getir",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Approved list exists\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.data).to.be.an('array');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/announcement-approval/approved", "host": ["{{baseUrl}}"], "path": ["api", "announcement-approval", "approved"]}
+					}
+				},
+				{
+					"name": "❌ Duyuruyu Reddet (Yeni Taslak)",
+					"event": [
+						{
+							"listen": "preRequest",
+							"script": {
+								"exec": [
+									"// Create new draft for reject test",
+									"const baseUrl = pm.environment.get('baseUrl');",
+									"const token = pm.environment.get('token');",
+									"",
+									"pm.sendRequest({",
+									"    url: `${baseUrl}/api/announcements`,",
+									"    method: 'POST',",
+									"    header: {",
+									"        'Authorization': `Bearer ${token}`,",
+									"        'Content-Type': 'application/json'",
+									"    },",
+									"    body: {",
+									"        mode: 'raw',",
+									"        raw: JSON.stringify({",
+									"            konu: 'Test',",
+									"            icerik: '<p>Test</p>',",
+									"            onaylayanKullaniciId: 2",
+									"        })",
+									"    }",
+									"}, (err, res) => {",
+									"    if (!err && res.json().data) {",
+									"        const rejectDuyuruId = res.json().data.id;",
+									"        pm.environment.set('rejectDuyuruId', rejectDuyuruId);",
+									"        ",
+									"        // Submit for approval",
+									"        pm.sendRequest({",
+									"            url: `${baseUrl}/api/announcement-approval/${rejectDuyuruId}/submit`,",
+									"            method: 'POST',",
+									"            header: { 'Authorization': `Bearer ${token}` }",
+									"        });",
+									"    }",
+									"});"
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Announcement rejected\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"note\": \"Test red notu\"}"},
+						"url": {"raw": "{{baseUrl}}/api/announcement-approval/{{rejectDuyuruId}}/reject", "host": ["{{baseUrl}}"], "path": ["api", "announcement-approval", "{{rejectDuyuruId}}", "reject"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "6️⃣ Gönderim ve Zamanlama",
+			"item": [
+				{
+					"name": "📧 Test Email Gönder - Kendi Email Adresine",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Test email sent successfully\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"    pm.expect(json.message).to.include('Test email');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{}"},
+						"url": {"raw": "{{baseUrl}}/api/announcements/{{testDuyuruId}}/send-test", "host": ["{{baseUrl}}"], "path": ["api", "announcements", "{{testDuyuruId}}", "send-test"]}
+					}
+				},
+				{
+					"name": "📧 Test Email Gönder - Farklı Email Adresine",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Test email sent to specific address\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"    pm.expect(json.message).to.include('test@example.com');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"testEmail\": \"test@example.com\"}"},
+						"url": {"raw": "{{baseUrl}}/api/announcements/{{testDuyuruId}}/send-test", "host": ["{{baseUrl}}"], "path": ["api", "announcements", "{{testDuyuruId}}", "send-test"]}
+					}
+				},
+				{
+					"name": "❌ Test Email - Geçersiz Email Formatı",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 400 Bad Request\", () => pm.response.to.have.status(400));",
+									"pm.test(\"Validation error for invalid email\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.false;",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"testEmail\": \"invalid-email\"}"},
+						"url": {"raw": "{{baseUrl}}/api/announcements/{{testDuyuruId}}/send-test", "host": ["{{baseUrl}}"], "path": ["api", "announcements", "{{testDuyuruId}}", "send-test"]}
+					}
+				},
+				{
+					"name": "📤 Hemen Gönder",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Send job started\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/announcements/{{testDuyuruId}}/send", "host": ["{{baseUrl}}"], "path": ["api", "announcements", "{{testDuyuruId}}", "send"]}
+					}
+				},
+				{
+					"name": "🔄 Gönderim Durumunu Kontrol Et",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Send status available\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.data.durum).to.exist;",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/announcements/{{testDuyuruId}}", "host": ["{{baseUrl}}"], "path": ["api", "announcements", "{{testDuyuruId}}"]}
+					}
+				},
+				{
+					"name": "📝 Gönderim Loglarını Getir",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Logs exist\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.data).to.be.an('array');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/announcements/{{testDuyuruId}}/send-logs", "host": ["{{baseUrl}}"], "path": ["api", "announcements", "{{testDuyuruId}}", "send-logs"]}
+					}
+				},
+				{
+					"name": "♻️ İptal Edilen Duyuruyu Yeniden Aktif Et",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Announcement reactivated\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"    pm.expect(json.message).to.include('aktif');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/announcements/{{scheduleDuyuruId}}/reactivate", "host": ["{{baseUrl}}"], "path": ["api", "announcements", "{{scheduleDuyuruId}}", "reactivate"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "7️⃣ Dosya Yönetimi",
+			"item": [
+				{
+					"name": "📤 Dosya Yükle (Temp Klasörüne)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"File uploaded to temp folder\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"    pm.expect(json.data.fileId).to.exist;",
+									"    pm.environment.set('testFileId', json.data.fileId);",
+									"    console.log('File uploaded to temp, ID:', json.data.fileId);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{"key": "file", "type": "file", "src": [], "description": "Manuel olarak dosya seçin (PDF, JPG, PNG, DOCX)"},
+								{"key": "description", "value": "Test dosyası - Sistematik klasör yapısı testi", "type": "text"}
+							]
+						},
+						"url": {"raw": "{{baseUrl}}/api/files/upload", "host": ["{{baseUrl}}"], "path": ["api", "files", "upload"]}
+					}
+				},
+				{
+					"name": "📋 Dosyaları Listele",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Files array exists\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.data).to.be.an('array');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/files?page=1&pageSize=20", "host": ["{{baseUrl}}"], "path": ["api", "files"], "query": [{"key": "page", "value": "1"}, {"key": "pageSize", "value": "20"}]}
+					}
+				},
+				{
+					"name": "🔗 Dosyayı Duyuruya Ekle (Temp → Announcement Klasörü)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"File attached to announcement\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"    pm.expect(json.message).to.include('duyuruya');",
+									"    console.log('File moved to announcement folder');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/files/{{testFileId}}/attach/{{testDuyuruId}}", "host": ["{{baseUrl}}"], "path": ["api", "files", "{{testFileId}}", "attach", "{{testDuyuruId}}"]}
+					}
+				},
+				{
+					"name": "📂 Duyuru Dosyalarını Listele",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Announcement files exist\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.data).to.be.an('array');",
+									"    pm.expect(json.data.length).to.be.greaterThan(0);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/files/announcement/{{testDuyuruId}}", "host": ["{{baseUrl}}"], "path": ["api", "files", "announcement", "{{testDuyuruId}}"]}
+					}
+				},
+				{
+					"name": "📥 Dosya İndir",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"File downloaded\", () => {",
+									"    pm.expect(pm.response.headers.get('Content-Type')).to.exist;",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/files/{{testFileId}}/download", "host": ["{{baseUrl}}"], "path": ["api", "files", "{{testFileId}}", "download"]}
+					}
+				},
+				{
+					"name": "🔓 Dosyayı Duyurudan Çıkar (Announcement → Temp Klasörü)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"File detached from announcement\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"    console.log('File moved back to temp folder');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/files/{{testFileId}}/detach/{{testDuyuruId}}", "host": ["{{baseUrl}}"], "path": ["api", "files", "{{testFileId}}", "detach", "{{testDuyuruId}}"]}
+					}
+				},
+				{
+					"name": "🗑️ Dosya Sil",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"File deleted\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/files/{{testFileId}}", "host": ["{{baseUrl}}"], "path": ["api", "files", "{{testFileId}}"]}
+					}
+				},
+				{
+					"name": "ℹ️ Dosya Bilgisi Al",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"File info retrieved\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.data).to.have.property('dosyaAdi');",
+									"    pm.expect(json.data).to.have.property('dosyaYolu');",
+									"    console.log('File path:', json.data.dosyaYolu);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/files/{{testFileId}}/info", "host": ["{{baseUrl}}"], "path": ["api", "files", "{{testFileId}}", "info"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "8️⃣ Şablon Yönetimi",
+			"item": [
+				{
+					"name": "📋 Şablonları Listele",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Templates array exists\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.data).to.be.an('array');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/templates", "host": ["{{baseUrl}}"], "path": ["api", "templates"]}
+					}
+				},
+				{
+					"name": "➕ Yeni Şablon Oluştur",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Template created\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.data.id).to.exist;",
+									"    pm.environment.set(\"templateId\", json.data.id);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"ad\": \"Test Şablonu\", \"aciklama\": \"Test için oluşturulmuş şablon\", \"konu\": \"{{konu}} - {{tarih}}\", \"icerik\": \"<h1>{{konu}}</h1><p>{{icerik}}</p><p>Gönderen: {{gonderen}}</p><p>Tarih: {{tarih}}</p>\", \"kategori\": \"Genel\"}"
+						},
+						"url": {"raw": "{{baseUrl}}/api/templates", "host": ["{{baseUrl}}"], "path": ["api", "templates"]}
+					}
+				},
+				{
+					"name": "🔍 Şablon Detayı Al",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Template data exists\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.data.ad).to.exist;",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/templates/{{templateId}}", "host": ["{{baseUrl}}"], "path": ["api", "templates", "{{templateId}}"]}
+					}
+				},
+				{
+					"name": "✏️ Şablon Güncelle",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Template updated\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"ad\": \"Test Şablonu (Güncellenmiş)\", \"aciklama\": \"Güncellenmiş açıklama\", \"kanu\": \"{{konu}}\", \"icerik\": \"<h2>{{konu}}</h2><div>{{icerik}}</div>\", \"kategori\": \"Duyuru\"}"
+						},
+						"url": {"raw": "{{baseUrl}}/api/templates/{{templateId}}", "host": ["{{baseUrl}}"], "path": ["api", "templates", "{{templateId}}"]}
+					}
+				},
+				{
+					"name": "👁️ Şablon Önizleme",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Preview has rendered content\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.data).to.have.property('renderedContent');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"Test Duyurusu\", \"icerik\": \"<p>Bu bir test içeriğidir.</p>\", \"gonderen\": \"Admin Kullanıcı\", \"tarih\": \"04.10.2025 14:30\"}"
+						},
+						"url": {"raw": "{{baseUrl}}/api/templates/{{templateId}}/preview", "host": ["{{baseUrl}}"], "path": ["api", "templates", "{{templateId}}", "preview"]}
+					}
+				},
+				{
+					"name": "📋 Şablonu Çoğalt",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Template duplicated\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.data.id).to.exist;",
+									"    pm.environment.set(\"duplicatedTemplateId\", json.data.id);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/templates/{{templateId}}/duplicate", "host": ["{{baseUrl}}"], "path": ["api", "templates", "{{templateId}}", "duplicate"]}
+					}
+				},
+				{
+					"name": "🔒 Şablonu Pasif Et",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Template deactivated\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/templates/{{templateId}}/deactivate", "host": ["{{baseUrl}}"], "path": ["api", "templates", "{{templateId}}", "deactivate"]}
+					}
+				},
+				{
+					"name": "✅ Şablonu Aktif Et",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Template activated\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/templates/{{templateId}}/activate", "host": ["{{baseUrl}}"], "path": ["api", "templates", "{{templateId}}", "activate"]}
+					}
+				},
+				{
+					"name": "💾 Duyuruyu Şablon Olarak Kaydet",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Announcement saved as template\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"templateName\": \"Duyurudan Oluşturulan Şablon\"}"
+						},
+						"url": {"raw": "{{baseUrl}}/api/announcements/{{testDuyuruId}}/save-as-template", "host": ["{{baseUrl}}"], "path": ["api", "announcements", "{{testDuyuruId}}", "save-as-template"]}
+					}
+				},
+				{
+					"name": "🗑️ Şablon Sil",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Template deleted\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/templates/{{duplicatedTemplateId}}", "host": ["{{baseUrl}}"], "path": ["api", "templates", "{{duplicatedTemplateId}}"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "9️⃣ Raporlama ve Gösterge Paneli",
+			"item": [
+				{
+					"name": "📊 Gösterge Paneli İstatistikleri",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Stats data exists\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.data).to.have.property('duyuruSayisi');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/dashboard/stats", "host": ["{{baseUrl}}"], "path": ["api", "dashboard", "stats"]}
+					}
+				},
+				{
+					"name": "📈 Sistem Sağlık Kontrolü",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Health check passed\", () => {",
+									"    const text = pm.response.text();",
+									"    pm.expect(text).to.include('Healthy');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "🔟 Güvenlik Testleri",
+			"item": [
+				{
+					"name": "🛡️ SQL Injection Testi - Engellendi",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 400 or 500 - Injection blocked\", () => {",
+									"    pm.expect([400, 500]).to.include(pm.response.code);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"grupAdi\": \"Test\", \"aciklama\": \"Test'; DROP TABLE KULLANICILAR; --\", \"grupTipi\": \"DYNAMIC\", \"viewAdi\": \"V_EMAIL_GENEL\", \"filterKosulu\": \"1=1 UNION SELECT PASSWORD FROM KULLANICILAR\"}"},
+						"url": {"raw": "{{baseUrl}}/api/email-groups", "host": ["{{baseUrl}}"], "path": ["api", "email-groups"]}
+					}
+				},
+				{
+					"name": "🛡️ XSS Testi - Temizlendi",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 400 - XSS blocked\", () => {",
+									"    pm.expect(pm.response.code).to.equal(400);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\"XSS Test\", \"konu\": \"Test\", \"icerik\": \"<script>alert('XSS')</script>\", \"onaylayanKullaniciId\": 2}"},
+						"url": {"raw": "{{baseUrl}}/api/announcements", "host": ["{{baseUrl}}"], "path": ["api", "announcements"]}
+					}
+				},
+				{
+					"name": "🛡️ Path Traversal Testi - Engellendi",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 400 or 404 - Path traversal blocked\", () => {",
+									"    pm.expect([400, 404]).to.include(pm.response.code);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/files/../../../appsettings.json/download", "host": ["{{baseUrl}}"], "path": ["api", "files", "..", "..", "..", "appsettings.json", "download"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "1️⃣1️⃣ Kullanıcı Yönetimi",
+			"item": [
+				{
+					"name": "📋 Kullanıcıları Listele",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Users array exists\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.data).to.be.an('array');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/user?page=1&pageSize=20", "host": ["{{baseUrl}}"], "path": ["api", "user"], "query": [{"key": "page", "value": "1"}, {"key": "pageSize", "value": "20"}]}
+					}
+				},
+				{
+					"name": "👤 Kullanıcı Detaylarını Getir",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"User data exists\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.data.email).to.exist;",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/user/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api", "user", "{{userId}}"]}
+					}
+				},
+				{
+					"name": "📊 Kullanıcı İstatistikleri",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Statistics exist\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.data).to.exist;",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/user/statistics", "host": ["{{baseUrl}}"], "path": ["api", "user", "statistics"]}
+					}
+				},
+				{
+					"name": "👥 Onaylayıcı Kullanıcıları Getir",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Approvers list exists\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.data).to.be.an('array');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/user/approvers", "host": ["{{baseUrl}}"], "path": ["api", "user", "approvers"]}
+					}
+				},
+				{
+					"name": "➕ Yeni Kullanıcı Oluştur (ADMIN)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 201 Created\", () => pm.response.to.have.status(201));",
+									"pm.test(\"User created successfully\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"    pm.expect(json.data.id).to.exist;",
+									"    pm.environment.set('createdUserId', json.data.id);",
+									"    console.log('Created User ID:', json.data.id);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"kullaniciAdi\": \"testuser\",\n    \"adSoyad\": \"Test User\",\n    \"email\": \"test.user@deu.edu.tr\",\n    \"departman\": \"IT Department\",\n    \"unvan\": \"Software Developer\",\n    \"rolId\": 3\n}"
+						},
+						"url": {"raw": "{{baseUrl}}/api/user", "host": ["{{baseUrl}}"], "path": ["api", "user"]}
+					}
+				},
+				{
+					"name": "❌ Kullanıcı Oluştur - Yetkisiz (Non-Admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 403 Forbidden\", () => pm.response.to.have.status(403));",
+									"pm.test(\"Error message for unauthorized access\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.false;",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{editorToken}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"kullaniciAdi\": \"unauthorized\",\n    \"adSoyad\": \"Unauthorized User\",\n    \"email\": \"unauthorized@deu.edu.tr\",\n    \"rolId\": 3\n}"
+						},
+						"url": {"raw": "{{baseUrl}}/api/user", "host": ["{{baseUrl}}"], "path": ["api", "user"]}
+					}
+				},
+				{
+					"name": "❌ Kullanıcı Oluştur - Geçersiz Email",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 400 Bad Request\", () => pm.response.to.have.status(400));",
+									"pm.test(\"Validation error\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.false;",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"kullaniciAdi\": \"baduser\",\n    \"adSoyad\": \"Bad User\",\n    \"email\": \"invalid-email\",\n    \"rolId\": 3\n}"
+						},
+						"url": {"raw": "{{baseUrl}}/api/user", "host": ["{{baseUrl}}"], "path": ["api", "user"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "1️⃣2️⃣ Sistem Ayarları",
+			"item": [
+				{
+					"name": "📧 E-posta Ayarlarını Getir",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Email settings exist\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.data).to.exist;",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/admin/system-settings/email-settings", "host": ["{{baseUrl}}"], "path": ["api", "admin", "system-settings", "email-settings"]}
+					}
+				},
+				{
+					"name": "📋 Tüm Sistem Ayarlarını Getir",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Settings exist\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.data).to.be.an('array');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/admin/system-settings/all", "host": ["{{baseUrl}}"], "path": ["api", "admin", "system-settings", "all"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "1️⃣3️⃣ Zamanlama Yönetimi",
+			"item": [
+				{
+					"name": "📅 Tekil Zamanlama Oluştur",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Schedule created successfully\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"    pm.expect(json.data.id).to.exist;",
+									"    pm.expect(json.data.hangfireJobId).to.exist;",
+									"    pm.environment.set('scheduleId', json.data.id);",
+									"    console.log('Schedule ID:', json.data.id);",
+									"    console.log('Hangfire Job ID:', json.data.hangfireJobId);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"duyuruId\": {{testDuyuruId}},\n    \"zamanlanmisTarih\": \"2025-12-31T10:00:00Z\",\n    \"aciklama\": \"Test amaçlı tekil zamanlama\"\n}"
+						},
+						"url": {"raw": "{{baseUrl}}/api/schedules", "host": ["{{baseUrl}}"], "path": ["api", "schedules"]}
+					}
+				},
+				{
+					"name": "📅 Toplu Zamanlama Oluştur (Tekrarlı)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Bulk schedules created successfully\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"    pm.expect(json.data).to.be.an('array');",
+									"    pm.expect(json.data.length).to.be.greaterThan(0);",
+									"    console.log('Created', json.data.length, 'recurring schedules');",
+									"    if (json.data.length > 0) {",
+									"        pm.environment.set('bulkScheduleId', json.data[0].id);",
+									"    }",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"duyuruId\": {{testDuyuruId}},\n    \"baslangicTarihi\": \"2025-11-01T09:00:00Z\",\n    \"bitisTarihi\": \"2025-11-30T09:00:00Z\",\n    \"tekrarAraligi\": 7,\n    \"aciklama\": \"Her hafta tekrarlanan zamanlama\"\n}"
+						},
+						"url": {"raw": "{{baseUrl}}/api/schedules/bulk", "host": ["{{baseUrl}}"], "path": ["api", "schedules", "bulk"]}
+					}
+				},
+				{
+					"name": "📋 Duyuruya Ait Zamanlamaları Getir",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Schedules list exists\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.data).to.be.an('array');",
+									"    console.log('Found', json.data.length, 'schedules for announcement');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/schedules/announcement/{{testDuyuruId}}", "host": ["{{baseUrl}}"], "path": ["api", "schedules", "announcement", "{{testDuyuruId}}"]}
+					}
+				},
+				{
+					"name": "❌ Zamanlamayı İptal Et",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Schedule cancelled successfully\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"    pm.expect(json.message).to.include('iptal');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"iptalNotu\": \"Test amaçlı iptal edildi\"\n}"
+						},
+						"url": {"raw": "{{baseUrl}}/api/schedules/{{scheduleId}}/cancel", "host": ["{{baseUrl}}"], "path": ["api", "schedules", "{{scheduleId}}", "cancel"]}
+					}
+				},
+				{
+					"name": "🗑️ Zamanlamayı Sil (ADMIN)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Schedule deleted successfully\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.true;",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/schedules/{{scheduleId}}", "host": ["{{baseUrl}}"], "path": ["api", "schedules", "{{scheduleId}}"]}
+					}
+				},
+				{
+					"name": "❌ Zamanlama Sil - Hatalı Durum (BEKLEMEDE)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 400 Bad Request\", () => pm.response.to.have.status(400));",
+									"pm.test(\"Error message for invalid state\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.success).to.be.false;",
+									"    pm.expect(json.message).to.exist;",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/schedules/{{bulkScheduleId}}", "host": ["{{baseUrl}}"], "path": ["api", "schedules", "{{bulkScheduleId}}"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "1️⃣4️⃣ Temizlik ve Son Testler",
+			"item": [
+				{
+					"name": "🗑️ Test Duyurusunu Sil",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{baseUrl}}/api/announcements/{{testDuyuruId}}", "host": ["{{baseUrl}}"], "path": ["api", "announcements", "{{testDuyuruId}}"]}
+					}
+				},
+				{
+					"name": "🔄 Son Sağlık Kontrolü",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"System healthy after tests\", () => {",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"]}
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{"key": "baseUrl", "value": "http://localhost:5118", "type": "string"},
+		{"key": "token", "value": "", "type": "string"},
+		{"key": "userId", "value": "", "type": "string"},
+		{"key": "testGrupId", "value": "", "type": "string"},
+		{"key": "staticGrupId", "value": "", "type": "string"},
+		{"key": "testDuyuruId", "value": "", "type": "string"},
+		{"key": "testFileId", "value": "", "type": "string"},
+		{"key": "duplicatedDuyuruId", "value": "", "type": "string"},
+		{"key": "rejectDuyuruId", "value": "", "type": "string"},
+		{"key": "scheduleDuyuruId", "value": "", "type": "string"},
+		{"key": "templateId", "value": "", "type": "string"},
+		{"key": "duplicatedTemplateId", "value": "", "type": "string"},
+		{"key": "createdUserId", "value": "", "type": "string"},
+		{"key": "scheduleId", "value": "", "type": "string"},
+		{"key": "bulkScheduleId", "value": "", "type": "string"},
+		{"key": "editorToken", "value": "", "type": "string"}
+	]
+}

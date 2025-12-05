@@ -1,0 +1,499 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <mat-icon class="title-icon">analytics</mat-icon>
+        Sistem Logları
+      </h1>
+      <p class="page-description">Login, sistem ve email gönderim loglarını izleyin</p>
+    </div>
+  </div>
+
+  <mat-tab-group (selectedIndexChange)="onTabChange($event)" animationDuration="0ms">
+    <!-- Login Logs Tab -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="tab-icon">login</mat-icon>
+        Login Logları
+      </ng-template>
+
+      <div class="tab-content">
+        <!-- Filters -->
+        <div class="filters-card">
+          <div class="filters-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Başlangıç Tarihi</mat-label>
+              <input matInput [matDatepicker]="loginStart"
+                     [ngModel]="loginStartDate()"
+                     (ngModelChange)="loginStartDate.set($event)">
+              <mat-datepicker-toggle matIconSuffix [for]="loginStart"></mat-datepicker-toggle>
+              <mat-datepicker #loginStart></mat-datepicker>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Bitiş Tarihi</mat-label>
+              <input matInput [matDatepicker]="loginEnd"
+                     [ngModel]="loginEndDate()"
+                     (ngModelChange)="loginEndDate.set($event)">
+              <mat-datepicker-toggle matIconSuffix [for]="loginEnd"></mat-datepicker-toggle>
+              <mat-datepicker #loginEnd></mat-datepicker>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Arama</mat-label>
+              <input matInput placeholder="Email, kullanıcı, IP..."
+                     [ngModel]="loginSearch()"
+                     (ngModelChange)="loginSearch.set($event)">
+              <mat-icon matIconPrefix>search</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Giriş Türü</mat-label>
+              <mat-select [ngModel]="loginType()"
+                          (ngModelChange)="loginType.set($event)">
+                <mat-option value="">Tümü</mat-option>
+                @for (tur of girisTuruOptions; track tur) {
+                  <mat-option [value]="tur">{{ tur }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <div class="filter-actions">
+            <mat-checkbox [ngModel]="loginFailedOnly()"
+                          (ngModelChange)="loginFailedOnly.set($event)">
+              Sadece Başarısız Girişler
+            </mat-checkbox>
+
+            <div class="action-buttons">
+              <button mat-raised-button color="primary" (click)="applyLoginFilter()">
+                <mat-icon>filter_list</mat-icon>
+                Filtrele
+              </button>
+              <button mat-stroked-button (click)="clearLoginFilter()">
+                <mat-icon>clear</mat-icon>
+                Temizle
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table -->
+        @if (loginLoading()) {
+          <div class="loading-state">
+            <mat-icon class="spin">refresh</mat-icon>
+            <p>Yükleniyor...</p>
+          </div>
+        } @else if (loginLogs().length === 0) {
+          <div class="empty-state">
+            <mat-icon>inbox</mat-icon>
+            <p>Login logu bulunamadı</p>
+          </div>
+        } @else {
+          <div class="table-card">
+            <table mat-table [dataSource]="loginLogs()">
+              <ng-container matColumnDef="id">
+                <th mat-header-cell *matHeaderCellDef>#</th>
+                <td mat-cell *matCellDef="let log">{{ log.id }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="kullaniciAdi">
+                <th mat-header-cell *matHeaderCellDef>Kullanıcı</th>
+                <td mat-cell *matCellDef="let log">
+                  <div class="user-cell">
+                    <mat-icon>person</mat-icon>
+                    {{ log.kullaniciAdi || '-' }}
+                  </div>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="email">
+                <th mat-header-cell *matHeaderCellDef>Email</th>
+                <td mat-cell *matCellDef="let log">{{ log.email || '-' }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="ipAdres">
+                <th mat-header-cell *matHeaderCellDef>IP</th>
+                <td mat-cell *matCellDef="let log">
+                  <span class="ip-badge">{{ log.ipAdres || '-' }}</span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="girisTuru">
+                <th mat-header-cell *matHeaderCellDef>Tür</th>
+                <td mat-cell *matCellDef="let log">
+                  <span class="type-badge">{{ log.girisTuru }}</span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="basarili">
+                <th mat-header-cell *matHeaderCellDef>Durum</th>
+                <td mat-cell *matCellDef="let log">
+                  <span [class]="getStatusClass(log.basarili)">
+                    <mat-icon>{{ getStatusIcon(log.basarili) }}</mat-icon>
+                    {{ getStatusText(log.basarili) }}
+                  </span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="girisTarihi">
+                <th mat-header-cell *matHeaderCellDef>Tarih</th>
+                <td mat-cell *matCellDef="let log">{{ formatDate(log.girisTarihi) }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="hataMesaji">
+                <th mat-header-cell *matHeaderCellDef>Hata</th>
+                <td mat-cell *matCellDef="let log">
+                  @if (log.hataMesaji) {
+                    <span class="error-text" [matTooltip]="log.hataMesaji">
+                      <mat-icon>error_outline</mat-icon>
+                      {{ log.hataMesaji.length > 40 ? log.hataMesaji.substring(0, 40) + '...' : log.hataMesaji }}
+                    </span>
+                  } @else {
+                    -
+                  }
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="loginColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: loginColumns"></tr>
+            </table>
+
+            <mat-paginator
+              [length]="loginTotal()"
+              [pageSize]="loginPageSize()"
+              [pageIndex]="loginPage() - 1"
+              [pageSizeOptions]="[25, 50, 100]"
+              (page)="onLoginPageChange($event)"
+              showFirstLastButtons>
+            </mat-paginator>
+          </div>
+        }
+      </div>
+    </mat-tab>
+
+    <!-- System Logs Tab -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="tab-icon">bug_report</mat-icon>
+        Sistem Logları
+      </ng-template>
+
+      <div class="tab-content">
+        <!-- Filters -->
+        <div class="filters-card">
+          <div class="filters-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Başlangıç Tarihi</mat-label>
+              <input matInput [matDatepicker]="systemStart"
+                     [ngModel]="systemStartDate()"
+                     (ngModelChange)="systemStartDate.set($event)">
+              <mat-datepicker-toggle matIconSuffix [for]="systemStart"></mat-datepicker-toggle>
+              <mat-datepicker #systemStart></mat-datepicker>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Bitiş Tarihi</mat-label>
+              <input matInput [matDatepicker]="systemEnd"
+                     [ngModel]="systemEndDate()"
+                     (ngModelChange)="systemEndDate.set($event)">
+              <mat-datepicker-toggle matIconSuffix [for]="systemEnd"></mat-datepicker-toggle>
+              <mat-datepicker #systemEnd></mat-datepicker>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Arama</mat-label>
+              <input matInput placeholder="Kullanıcı, işlem, detay..."
+                     [ngModel]="systemSearch()"
+                     (ngModelChange)="systemSearch.set($event)">
+              <mat-icon matIconPrefix>search</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Log Seviye</mat-label>
+              <mat-select [ngModel]="systemLogLevel()"
+                          (ngModelChange)="systemLogLevel.set($event)">
+                <mat-option value="">Tümü</mat-option>
+                @for (seviye of logSeviyeOptions; track seviye) {
+                  <mat-option [value]="seviye">{{ seviye }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Kategori</mat-label>
+              <mat-select [ngModel]="systemCategory()"
+                          (ngModelChange)="systemCategory.set($event)">
+                <mat-option value="">Tümü</mat-option>
+                @for (kat of kategoriOptions; track kat) {
+                  <mat-option [value]="kat">{{ kat }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <div class="filter-actions">
+            <mat-checkbox [ngModel]="systemErrorsOnly()"
+                          (ngModelChange)="systemErrorsOnly.set($event)">
+              Sadece Hatalı Loglar (WARNING, ERROR)
+            </mat-checkbox>
+
+            <div class="action-buttons">
+              <button mat-raised-button color="primary" (click)="applySystemFilter()">
+                <mat-icon>filter_list</mat-icon>
+                Filtrele
+              </button>
+              <button mat-stroked-button (click)="clearSystemFilter()">
+                <mat-icon>clear</mat-icon>
+                Temizle
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table -->
+        @if (systemLoading()) {
+          <div class="loading-state">
+            <mat-icon class="spin">refresh</mat-icon>
+            <p>Yükleniyor...</p>
+          </div>
+        } @else if (systemLogs().length === 0) {
+          <div class="empty-state">
+            <mat-icon>inbox</mat-icon>
+            <p>Sistem logu bulunamadı</p>
+          </div>
+        } @else {
+          <div class="table-card">
+            <table mat-table [dataSource]="systemLogs()">
+              <ng-container matColumnDef="id">
+                <th mat-header-cell *matHeaderCellDef>#</th>
+                <td mat-cell *matCellDef="let log">{{ log.id }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="kullaniciAdi">
+                <th mat-header-cell *matHeaderCellDef>Kullanıcı</th>
+                <td mat-cell *matCellDef="let log">
+                  <div class="user-cell">
+                    <mat-icon>person</mat-icon>
+                    {{ log.kullaniciAdi || 'System' }}
+                  </div>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="logSeviye">
+                <th mat-header-cell *matHeaderCellDef>Seviye</th>
+                <td mat-cell *matCellDef="let log">
+                  <span [class]="'log-badge ' + getLogSeviyeClass(log.logSeviye)">
+                    {{ log.logSeviye }}
+                  </span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="kategori">
+                <th mat-header-cell *matHeaderCellDef>Kategori</th>
+                <td mat-cell *matCellDef="let log">
+                  <span class="category-badge">{{ log.kategori }}</span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="islem">
+                <th mat-header-cell *matHeaderCellDef>İşlem</th>
+                <td mat-cell *matCellDef="let log">{{ log.islem }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="detay">
+                <th mat-header-cell *matHeaderCellDef>Detay</th>
+                <td mat-cell *matCellDef="let log">
+                  @if (log.detay) {
+                    <span [matTooltip]="log.detay">
+                      {{ log.detay.length > 50 ? log.detay.substring(0, 50) + '...' : log.detay }}
+                    </span>
+                  } @else {
+                    -
+                  }
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="ipAdres">
+                <th mat-header-cell *matHeaderCellDef>IP</th>
+                <td mat-cell *matCellDef="let log">
+                  <span class="ip-badge">{{ log.ipAdres || '-' }}</span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="logTarihi">
+                <th mat-header-cell *matHeaderCellDef>Tarih</th>
+                <td mat-cell *matCellDef="let log">{{ formatDate(log.logTarihi) }}</td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="systemColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: systemColumns"></tr>
+            </table>
+
+            <mat-paginator
+              [length]="systemTotal()"
+              [pageSize]="systemPageSize()"
+              [pageIndex]="systemPage() - 1"
+              [pageSizeOptions]="[25, 50, 100]"
+              (page)="onSystemPageChange($event)"
+              showFirstLastButtons>
+            </mat-paginator>
+          </div>
+        }
+      </div>
+    </mat-tab>
+
+    <!-- Email Logs Tab -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="tab-icon">email</mat-icon>
+        Email Logları
+      </ng-template>
+
+      <div class="tab-content">
+        <!-- Filters -->
+        <div class="filters-card">
+          <div class="filters-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Başlangıç Tarihi</mat-label>
+              <input matInput [matDatepicker]="emailStart"
+                     [ngModel]="emailStartDate()"
+                     (ngModelChange)="emailStartDate.set($event)">
+              <mat-datepicker-toggle matIconSuffix [for]="emailStart"></mat-datepicker-toggle>
+              <mat-datepicker #emailStart></mat-datepicker>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Bitiş Tarihi</mat-label>
+              <input matInput [matDatepicker]="emailEnd"
+                     [ngModel]="emailEndDate()"
+                     (ngModelChange)="emailEndDate.set($event)">
+              <mat-datepicker-toggle matIconSuffix [for]="emailEnd"></mat-datepicker-toggle>
+              <mat-datepicker #emailEnd></mat-datepicker>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Arama</mat-label>
+              <input matInput placeholder="Email, ad soyad, konu..."
+                     [ngModel]="emailSearch()"
+                     (ngModelChange)="emailSearch.set($event)">
+              <mat-icon matIconPrefix>search</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="filter-actions">
+            <mat-checkbox [ngModel]="emailFailedOnly()"
+                          (ngModelChange)="emailFailedOnly.set($event)">
+              Sadece Başarısız Gönderimler
+            </mat-checkbox>
+
+            <div class="action-buttons">
+              <button mat-raised-button color="primary" (click)="applyEmailFilter()">
+                <mat-icon>filter_list</mat-icon>
+                Filtrele
+              </button>
+              <button mat-stroked-button (click)="clearEmailFilter()">
+                <mat-icon>clear</mat-icon>
+                Temizle
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table -->
+        @if (emailLoading()) {
+          <div class="loading-state">
+            <mat-icon class="spin">refresh</mat-icon>
+            <p>Yükleniyor...</p>
+          </div>
+        } @else if (emailLogs().length === 0) {
+          <div class="empty-state">
+            <mat-icon>inbox</mat-icon>
+            <p>Email logu bulunamadı</p>
+          </div>
+        } @else {
+          <div class="table-card">
+            <table mat-table [dataSource]="emailLogs()">
+              <ng-container matColumnDef="id">
+                <th mat-header-cell *matHeaderCellDef>#</th>
+                <td mat-cell *matCellDef="let log">{{ log.id }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="duyuruKonu">
+                <th mat-header-cell *matHeaderCellDef>Duyuru</th>
+                <td mat-cell *matCellDef="let log">
+                  @if (log.duyuruKonu) {
+                    <span [matTooltip]="log.duyuruKonu" class="subject-cell">
+                      <mat-icon>campaign</mat-icon>
+                      {{ log.duyuruKonu.length > 35 ? log.duyuruKonu.substring(0, 35) + '...' : log.duyuruKonu }}
+                    </span>
+                  } @else {
+                    -
+                  }
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="aliciEmail">
+                <th mat-header-cell *matHeaderCellDef>Alıcı</th>
+                <td mat-cell *matCellDef="let log">{{ log.aliciEmail }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="aliciAdSoyad">
+                <th mat-header-cell *matHeaderCellDef>Alıcı Adı</th>
+                <td mat-cell *matCellDef="let log">{{ log.aliciAdSoyad || '-' }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="aliciKategorisi">
+                <th mat-header-cell *matHeaderCellDef>Kategori</th>
+                <td mat-cell *matCellDef="let log">
+                  <span class="category-badge">{{ log.aliciKategorisi }}</span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="gonderimBasarili">
+                <th mat-header-cell *matHeaderCellDef>Durum</th>
+                <td mat-cell *matCellDef="let log">
+                  <span [class]="getStatusClass(log.gonderimBasarili)">
+                    <mat-icon>{{ getStatusIcon(log.gonderimBasarili) }}</mat-icon>
+                    {{ getStatusText(log.gonderimBasarili) }}
+                  </span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="gonderimTarihi">
+                <th mat-header-cell *matHeaderCellDef>Tarih</th>
+                <td mat-cell *matCellDef="let log">{{ formatDate(log.gonderimTarihi) }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="hataMesaji">
+                <th mat-header-cell *matHeaderCellDef>Hata</th>
+                <td mat-cell *matCellDef="let log">
+                  @if (log.hataMesaji) {
+                    <span class="error-text" [matTooltip]="log.hataMesaji">
+                      <mat-icon>error_outline</mat-icon>
+                      {{ log.hataMesaji.length > 40 ? log.hataMesaji.substring(0, 40) + '...' : log.hataMesaji }}
+                    </span>
+                  } @else {
+                    -
+                  }
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="emailColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: emailColumns"></tr>
+            </table>
+
+            <mat-paginator
+              [length]="emailTotal()"
+              [pageSize]="emailPageSize()"
+              [pageIndex]="emailPage() - 1"
+              [pageSizeOptions]="[25, 50, 100]"
+              (page)="onEmailPageChange($event)"
+              showFirstLastButtons>
+            </mat-paginator>
+          </div>
+        }
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>

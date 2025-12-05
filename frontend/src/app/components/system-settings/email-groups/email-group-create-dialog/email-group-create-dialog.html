@@ -1,0 +1,195 @@
+<div class="create-dialog">
+  <!-- Header -->
+  <div mat-dialog-title class="dialog-header">
+    <h2>
+      <mat-icon>group_add</mat-icon>
+      Yeni Duyuru Grubu Oluştur
+    </h2>
+    <button mat-icon-button (click)="close()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <mat-dialog-content>
+    <!-- Step 1: Tip Seçimi -->
+    @if (!selectedType()) {
+      <div class="type-selection">
+        <p class="section-title">Grup Tipini Seçiniz:</p>
+        <div class="type-cards">
+          @for (tip of grupTipleri; track tip.value) {
+            <mat-card class="type-card" (click)="selectType(tip.value)" [style.border-color]="tip.color">
+              <mat-icon [style.color]="tip.color">{{ tip.icon }}</mat-icon>
+              <h3>{{ tip.label }}</h3>
+              <p>{{ tip.description }}</p>
+            </mat-card>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Step 2: Form -->
+    @if (selectedType()) {
+      <div class="form-container">
+        <button mat-button (click)="selectedType.set(null)" class="back-button">
+          <mat-icon>arrow_back</mat-icon>
+          Tip Değiştir
+        </button>
+
+        <!-- Temel Bilgiler (Tüm Tipler için) -->
+        <form [formGroup]="basicInfoForm">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label style="font-weight: 500;">Grup Adı</mat-label>
+            <input matInput formControlName="grupAdi" placeholder="Örn: Akademik Personel">
+            <mat-error>Grup adı zorunludur</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label style="font-weight: 500;">Açıklama (Opsiyonel)</mat-label>
+            <textarea matInput formControlName="aciklama" rows="2"></textarea>
+          </mat-form-field>
+        </form>
+
+        <!-- NORMAL Grup Formu -->
+        @if (selectedType() === 'NORMAL') {
+          <div class="normal-form">
+            <h4>Üye Ekle:</h4>
+            <div class="add-member-form">
+              <mat-form-field appearance="outline">
+                <mat-label style="font-weight: 500;">Email veya Kullanıcı Adı</mat-label>
+                <input matInput [(ngModel)]="newMemberEmail" placeholder="@deu.edu.tr">
+                <mat-hint>@deu.edu.tr girmenize gerek yok</mat-hint>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label style="font-weight: 500;">Ad Soyad</mat-label>
+                <input matInput [(ngModel)]="newMemberName" placeholder="Ad Soyad">
+              </mat-form-field>
+              <button mat-raised-button color="primary" (click)="addNormalMember()">
+                <mat-icon>add</mat-icon>
+                Ekle
+              </button>
+            </div>
+
+            <div class="members-list">
+              <h4>Eklenen Üyeler ({{ normalMembers.length }}):</h4>
+              @if (normalMembers.length === 0) {
+                <p class="empty-text">Henüz üye eklenmedi</p>
+              }
+              @for (member of normalMembers; track $index) {
+                <div class="member-item">
+                  <div class="member-info">
+                    <span class="member-email">{{ member.email }}</span>
+                    @if (member.adSoyad) {
+                      <span class="member-name">{{ member.adSoyad }}</span>
+                    }
+                  </div>
+                  <button mat-icon-button (click)="removeNormalMember($index)">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- STATIK Grup Formu -->
+        @if (selectedType() === 'STATIK') {
+          <div class="statik-form">
+            <h4>Dosya Yükle:</h4>
+            <input type="file" #fileInput (change)="onFileSelected($event)" accept=".xlsx,.xls,.csv,.txt" hidden>
+            <button mat-raised-button color="primary" (click)="fileInput.click()">
+              <mat-icon>upload_file</mat-icon>
+              Dosya Seç
+            </button>
+            @if (selectedFile) {
+              <p>{{ selectedFile.name }}</p>
+            }
+            <p class="hint">Excel (.xlsx, .xls), CSV (.csv) veya TXT (.txt) formatında</p>
+            <p class="warning">⚠️ Import sonrası mevcut üyeler silinir ve dosyadan yeniden yüklenir</p>
+
+            @if (filePreview.length > 0) {
+              <div class="file-preview">
+                <h4>Önizleme (İlk 10 satır):</h4>
+                @for (item of filePreview; track $index) {
+                  <div class="preview-item">{{ item.email }} @if (item.adSoyad) {- {{ item.adSoyad }}}</div>
+                }
+              </div>
+            }
+            @if (selectedFile && filePreview.length === 0) {
+              <p class="info">Excel dosyası için önizleme desteklenmez. Upload sonrası sonuç görüntülenecek.</p>
+            }
+          </div>
+        }
+
+        <!-- DINAMIK Grup Formu -->
+        @if (selectedType() === 'DINAMIK') {
+          <div class="dinamik-form">
+            <form [formGroup]="dinamikGroupForm">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label style="font-weight: 500;">View Adı</mat-label>
+                <input matInput formControlName="viewAdi" placeholder="Örn: xxper.V_PERSONEL_EMAIL">
+                <mat-hint>Tam view adını giriniz (şema.view_adı)</mat-hint>
+                <mat-error>View adı zorunludur</mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label style="font-weight: 500;">Filter Koşulu (Opsiyonel)</mat-label>
+                <input matInput formControlName="filterKosulu" placeholder="Örn: BIRIM = 'MÜHENDİSLİK'">
+                <mat-hint>SQL WHERE koşulu</mat-hint>
+              </mat-form-field>
+            </form>
+
+            @if (previewLoading) {
+              <button mat-raised-button color="accent" disabled>
+                <mat-spinner diameter="20"></mat-spinner>
+                Yükleniyor...
+              </button>
+            } @else {
+              <button mat-raised-button color="accent" (click)="previewDynamicGroup()" [disabled]="!dinamikGroupForm.value.viewAdi">
+                <mat-icon>preview</mat-icon>
+                Önizle
+              </button>
+            }
+
+            @if (dynamicPreview.length > 0) {
+              <div class="file-preview">
+                <h4>Önizleme (İlk 10 kayıt) - Toplam: {{ dynamicTotalCount }} üye</h4>
+                @for (item of dynamicPreview; track $index) {
+                  <div class="preview-item">{{ item.email }} @if (item.adSoyad) {- {{ item.adSoyad }}}</div>
+                }
+              </div>
+            }
+
+            <p class="info">ℹ️ Dinamik gruplarda üye listesi her duyuru gönderiminde real-time olarak sorgulanır</p>
+          </div>
+        }
+
+        <!-- DEBIS Grup Formu -->
+        @if (selectedType() === 'DEBIS') {
+          <div class="debis-form">
+            <p class="info">⚠️ Sadece BCC olarak kullanılabilir</p>
+            <p class="info">ℹ️ Bu grup Debis listeci sistemini kullanır</p>
+            <p class="hint">* Listeci email adresi sistem tarafından otomatik atanır: listeci@deu.edu.tr</p>
+            <p class="hint">** Listeciyi veritabanında manuel olarak güncelleyiniz. </p>
+          </div>
+        }
+      </div>
+    }
+  </mat-dialog-content>
+
+  @if (selectedType()) {
+    <mat-dialog-actions>
+      <button mat-button (click)="close()">İptal</button>
+      @if (loading()) {
+        <button mat-raised-button color="primary" disabled>
+          <mat-spinner diameter="20"></mat-spinner>
+          Oluşturuluyor...
+        </button>
+      } @else {
+        <button mat-raised-button color="primary" (click)="onSubmit()">
+          <mat-icon>check</mat-icon>
+          Oluştur
+        </button>
+      }
+    </mat-dialog-actions>
+  }
+</div>

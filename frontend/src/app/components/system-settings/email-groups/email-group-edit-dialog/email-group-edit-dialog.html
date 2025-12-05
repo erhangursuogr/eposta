@@ -1,0 +1,113 @@
+<div class="edit-dialog">
+  @if (loading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="50"></mat-spinner>
+    </div>
+  } @else if (group()) {
+    <div mat-dialog-title class="dialog-header">
+      <h2><mat-icon>edit</mat-icon> Grup Düzenle</h2>
+      <button mat-icon-button (click)="close()"><mat-icon>close</mat-icon></button>
+    </div>
+
+    <mat-dialog-content>
+      <form [formGroup]="editForm">
+        <div class="info-chip">
+          <mat-chip [class]="getGrupTipiBadge(group()!.grupTipi)">{{ getGrupTipiText(group()!.grupTipi) }}</mat-chip>
+          <span>Grup tipi değiştirilemez</span>
+        </div>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label style="font-weight: 500;">Grup Adı</mat-label>
+          <input matInput formControlName="grupAdi">
+          <mat-error>Grup adı zorunludur</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label style="font-weight: 500;">Açıklama</mat-label>
+          <textarea matInput formControlName="aciklama" rows="2"></textarea>
+        </mat-form-field>
+
+        @if (isAdmin) {
+          <div class="status-toggle">
+            <mat-slide-toggle formControlName="aktif" color="primary">
+              Grup Aktif
+            </mat-slide-toggle>
+            <mat-hint>Pasif gruplar sadece admin tarafından görülebilir ve kullanılabilir</mat-hint>
+          </div>
+        }
+
+        @if (group()!.grupTipi === 'DINAMIK') {
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label style="font-weight: 500;">View Adı</mat-label>
+            <input matInput formControlName="viewAdi" readonly>
+            <mat-hint>View adı değiştirilemez</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label style="font-weight: 500;">Filter Koşulu</mat-label>
+            <input matInput formControlName="filterKosulu">
+          </mat-form-field>
+        }
+
+        @if (group()!.grupTipi === 'DEBIS') {
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label style="font-weight: 500;">Listeci Email</mat-label>
+            <input matInput formControlName="listeciEmail" readonly>
+            <mat-hint>Listeci email manuel olarak veritabanında güncellenir</mat-hint>
+          </mat-form-field>
+        }
+
+        @if (group()!.grupTipi === 'NORMAL') {
+          <div class="members-section">
+            <h4>Üye Yönetimi</h4>
+            <div class="add-member">
+              <mat-form-field appearance="outline">
+                <mat-label style="font-weight: 500;">Email</mat-label>
+                <input matInput [(ngModel)]="newMemberEmail" [ngModelOptions]="{standalone: true}">
+                <mat-hint>@deu.edu.tr girmenize gerek yok</mat-hint>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label style="font-weight: 500;">Ad Soyad</mat-label>
+                <input matInput [(ngModel)]="newMemberName" [ngModelOptions]="{standalone: true}">
+              </mat-form-field>
+              <button mat-raised-button color="primary" (click)="addMember()">
+                <mat-icon>add</mat-icon> Ekle
+              </button>
+            </div>
+
+            <div class="members-list">
+              @for (member of members(); track member.id) {
+                <div class="member-item">
+                  <div class="member-info">
+                    <span class="member-email">{{ member.email }}</span>
+                    @if (member.adSoyad) {
+                      <span class="member-name">{{ member.adSoyad }}</span>
+                    }
+                  </div>
+                  <button mat-icon-button (click)="removeMember(member.id)">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </form>
+    </mat-dialog-content>
+
+    <mat-dialog-actions>
+      <button mat-button (click)="close()">İptal</button>
+      @if (saving()) {
+        <button mat-raised-button color="primary" disabled>
+          <mat-spinner diameter="20"></mat-spinner>
+          Kaydediliyor...
+        </button>
+      } @else {
+        <button mat-raised-button color="primary" (click)="onSubmit()">
+          <mat-icon>save</mat-icon>
+          Kaydet
+        </button>
+      }
+    </mat-dialog-actions>
+  }
+</div>

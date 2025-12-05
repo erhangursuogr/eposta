@@ -1,0 +1,93 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <mat-icon class="title-icon" style="color: #f44336;">cancel</mat-icon>
+        Reddettiğim Duyurular
+      </h1>
+      <p class="page-description">Reddettiğiniz duyuruları görüntüleyin</p>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="50"></mat-spinner>
+      <p>Yükleniyor...</p>
+    </div>
+  }
+
+  @if (!loading() && announcements().length === 0) {
+    <mat-card class="empty-state">
+      <mat-icon class="empty-icon">inbox</mat-icon>
+      <h2>Henüz Reddedilmiş Duyuru Yok</h2>
+      <p>Reddettiğiniz duyurular burada görünecektir.</p>
+    </mat-card>
+  }
+
+  @if (!loading() && announcements().length > 0) {
+    <div class="announcements-list">
+      @for (announcement of announcements(); track announcement.id) {
+        <mat-card class="announcement-card">
+          <mat-card-header>
+            <div class="card-header-content">
+              <div class="header-text">
+                <mat-card-title>{{ announcement.konu }}</mat-card-title>
+                <!-- <mat-card-subtitle>{{ announcement.konu }}</mat-card-subtitle> -->
+              </div>
+              <button mat-icon-button (click)="viewDetails(announcement)" matTooltip="Detayları Görüntüle">
+                <mat-icon>visibility</mat-icon>
+              </button>
+            </div>
+          </mat-card-header>
+
+          <mat-card-content>
+            <div class="announcement-info">
+              <div class="info-item">
+                <mat-icon>person</mat-icon>
+                <span><strong>Oluşturan:</strong> {{ announcement.olusturanKullaniciAdi || 'Bilinmiyor' }}</span>
+              </div>
+              @if (announcement.ilkOnaylayanKullaniciAdi) {
+                <div class="info-item">
+                  <mat-icon>supervisor_account</mat-icon>
+                  <span><strong>Koordinatör:</strong> {{ announcement.ilkOnaylayanKullaniciAdi }}</span>
+                </div>
+              }
+              <div class="info-item">
+                <mat-icon>block</mat-icon>
+                <span><strong>Reddeden:</strong> {{ announcement.islemYapan || announcement.onaylayanKullaniciAdi || 'Bilinmiyor' }}</span>
+              </div>
+              <div class="info-item">
+                <mat-icon>event</mat-icon>
+                <span><strong>Red Tarihi:</strong> {{ formatDate(announcement.islemTarihi || announcement.redTarihi) }}</span>
+              </div>
+              <div class="info-item">
+                <mat-icon>description</mat-icon>
+                <span><strong>Durum:</strong> {{ getDurumLabel(announcement.durum) }}</span>
+              </div>
+            </div>
+
+            @if (announcement.onayNotu) {
+              <div class="coordinator-note">
+                <mat-icon>comment</mat-icon>
+                <div class="note-content">
+                  <strong>Koordinatör Notu:</strong>
+                  <p>{{ announcement.onayNotu }}</p>
+                </div>
+              </div>
+            }
+
+            @if (announcement.islemNotu || announcement.redNedeni) {
+              <div class="rejection-note">
+                <mat-icon>error</mat-icon>
+                <div class="note-content">
+                  <strong>Red Nedeni:</strong>
+                  <p>{{ announcement.islemNotu || announcement.redNedeni }}</p>
+                </div>
+              </div>
+            }
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>
+  }
+</div>

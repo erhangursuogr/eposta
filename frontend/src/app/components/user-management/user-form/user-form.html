@@ -1,0 +1,155 @@
+<div class="page-container">
+  <!-- Header Section -->
+  <div class="header-section">
+    <div class="title-group">
+      <h1 class="page-title">
+        <mat-icon class="title-icon">person_add</mat-icon>
+        Yeni Kullanıcı
+      </h1>
+      <p class="page-subtitle">Sisteme yeni kullanıcı ekleyin</p>
+    </div>
+    <button mat-raised-button color="accent" class="back-btn" (click)="cancel()">
+      <mat-icon>arrow_back</mat-icon>
+      Geri Dön
+    </button>
+  </div>
+
+  <!-- Form Card -->
+  <mat-card class="form-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>badge</mat-icon>
+        Kullanıcı Detayları
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <form [formGroup]="userForm" (ngSubmit)="save()">
+        <div class="form-grid">
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label style="font-weight: 500;">Email *</mat-label>
+            <input matInput
+              type="email"
+              formControlName="email"
+              placeholder="ali.veli@deu.edu.tr">
+            <mat-icon matPrefix>email</mat-icon>
+            @if (userForm.get('email')?.hasError('required')) {
+              <mat-error>
+                Email gerekli
+              </mat-error>
+            }
+            @if (userForm.get('email')?.hasError('email')) {
+              <mat-error>
+                Geçerli bir email adresi girin
+              </mat-error>
+            }
+            <mat-hint>@deu.edu.tr uzantılı email. Kullanıcı bilgileri ilk girişte Personel Otomasyonundan çekilecek.</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label style="font-weight: 500;">Rol *</mat-label>
+            <mat-select formControlName="rolId">
+              @for (role of roles; track role) {
+                <mat-option [value]="role.id">
+                  {{ role.rolAdi }}
+                </mat-option>
+              }
+            </mat-select>
+            <mat-icon matPrefix>admin_panel_settings</mat-icon>
+            @if (userForm.get('rolId')?.hasError('required')) {
+              <mat-error>
+                Rol seçimi gerekli
+              </mat-error>
+            }
+            <mat-hint>Kullanıcının sistem yetkileri</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label style="font-weight: 500;">Durum *</mat-label>
+            <mat-select formControlName="aktif">
+              <mat-option value="Y">Aktif</mat-option>
+              <mat-option value="N">Pasif</mat-option>
+            </mat-select>
+            <mat-icon matPrefix>toggle_on</mat-icon>
+            <mat-hint>Kullanıcı sisteme giriş yapabilir mi?</mat-hint>
+          </mat-form-field>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="form-actions">
+          <button mat-stroked-button
+            type="button"
+            color="accent"
+            class="action-btn"
+            (click)="cancel()">
+            <mat-icon>close</mat-icon>
+            İptal
+          </button>
+          <button mat-raised-button
+            type="submit"
+            color="primary"
+            class="action-btn"
+            [disabled]="!userForm.valid || saving()">
+            @if (saving()) {
+              <mat-spinner diameter="20" class="btn-spinner"></mat-spinner>
+              Kaydediliyor...
+            } @else {
+              <ng-container>
+                <mat-icon>save</mat-icon>
+                Kaydet
+              </ng-container>
+            }
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Role Information Card -->
+  <mat-card class="help-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>info</mat-icon>
+        Rol Açıklamaları
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="role-info-grid">
+        <div class="role-info-item">
+          <div class="role-info-header">
+            <mat-icon class="role-info-icon admin">admin_panel_settings</mat-icon>
+            <span class="role-info-name">Admin</span>
+          </div>
+          <p class="role-info-desc">Tüm sistem yetkilerine sahiptir. Kullanıcı, grup ve şablon yönetimi yapabilir.</p>
+        </div>
+        <div class="role-info-item">
+          <div class="role-info-header">
+            <mat-icon class="role-info-icon manager">manage_accounts</mat-icon>
+            <span class="role-info-name">Yönetici</span>
+          </div>
+          <p class="role-info-desc">Son onay yetkisine sahiptir. Duyuruları onaylayıp gönderebilir.</p>
+        </div>
+        <div class="role-info-item">
+          <div class="role-info-header">
+            <mat-icon class="role-info-icon coordinator">supervisor_account</mat-icon>
+            <span class="role-info-name">Kontrolör</span>
+          </div>
+          <p class="role-info-desc">İlk onay yetkisine sahiptir. Duyuruları kontrol edip yöneticiye gönderir.</p>
+        </div>
+        <div class="role-info-item">
+          <div class="role-info-header">
+            <mat-icon class="role-info-icon editor">edit</mat-icon>
+            <span class="role-info-name">Editör</span>
+          </div>
+          <p class="role-info-desc">Duyuru oluşturabilir ve düzenleyebilir. Onay için gönderebilir.</p>
+        </div>
+        <div class="role-info-item">
+          <div class="role-info-header">
+            <mat-icon class="role-info-icon viewer">visibility</mat-icon>
+            <span class="role-info-name">Görüntüleyici</span>
+          </div>
+          <p class="role-info-desc">Sadece okuma yetkisi vardır. Duyuruları görüntüleyebilir.</p>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

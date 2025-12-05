@@ -1,0 +1,510 @@
+<div class="page-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <mat-icon class="title-icon">{{ isEditMode() ? 'edit' : 'add_circle' }}</mat-icon>
+        {{ isEditMode() ? 'Duyuru Düzenle' : 'Yeni Duyuru Oluştur' }}
+      </h1>
+      <p class="page-description">
+        Alıcılara gönderilecek duyuru içeriğini hazırlayın
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <button mat-stroked-button (click)="cancel()" [disabled]="loading()">
+        <mat-icon>close</mat-icon>
+        İptal
+      </button>
+    </div>
+  </div>
+
+  <!-- Red Bildirimleri -->
+  @if (announcement() && (announcement()!.koordinatorRedNotu || announcement()!.managerRedNotu)) {
+    <mat-card class="rejection-alert">
+      <mat-card-header>
+        <mat-card-title class="text-danger">
+          <mat-icon class="icon-danger">cancel</mat-icon>
+          Duyuru Reddedildi
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        @if (announcement()!.koordinatorRedNotu) {
+          <div class="rejection-info koordinator-rejection">
+            <div class="rejection-header">
+              <mat-icon>person</mat-icon>
+              <strong>Kontrolör Reddi</strong>
+              <span class="rejection-date">{{ formatDate(announcement()!.koordinatorRedTarihi) }}</span>
+            </div>
+            <div class="rejection-reason">
+              <mat-icon>comment</mat-icon>
+              <p>{{ announcement()!.koordinatorRedNotu }}</p>
+            </div>
+          </div>
+        }
+        @if (announcement()!.managerRedNotu) {
+          <div class="rejection-info manager-rejection">
+            <div class="rejection-header">
+              <mat-icon>verified_user</mat-icon>
+              <strong>Yönetici Reddi</strong>
+              <span class="rejection-date">{{ formatDate(announcement()!.managerRedTarihi) }}</span>
+            </div>
+            <div class="rejection-reason">
+              <mat-icon>comment</mat-icon>
+              <p>{{ announcement()!.managerRedNotu }}</p>
+            </div>
+          </div>
+        }
+        <div class="rejection-action">
+          <mat-icon>info</mat-icon>
+          <p><strong>Red nedenlerini dikkate alarak düzeltmeler yapabilir ve tekrar onaya gönderebilirsiniz.</strong></p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  }
+
+  <!-- Form -->
+  <form [formGroup]="announcementForm" class="announcement-form">
+
+    <!-- Step 1: Basic Information -->
+    <mat-card class="form-section">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>info</mat-icon>
+          Temel Bilgiler
+        </mat-card-title>
+      </mat-card-header>
+
+      <mat-card-content>
+        <!-- Title -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Konu</mat-label>
+          <input matInput formControlName="konu" placeholder="Duyuru konusunu girin..." maxlength="500">
+          <mat-hint align="end">{{ announcementForm.get('konu')?.value?.length || 0 }}/500</mat-hint>
+          @if (announcementForm.get('konu')?.hasError('required')) {
+            <mat-error>
+              Konu zorunludur
+            </mat-error>
+          }
+          @if (announcementForm.get('konu')?.hasError('minlength')) {
+            <mat-error>
+              En az 5 karakter olmalıdır
+            </mat-error>
+          }
+        </mat-form-field>
+
+        <!-- Signature Category Selection -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>İmza Kategorisi</mat-label>
+          <mat-select formControlName="duyuruKategorisi" required>
+            @for (category of categories(); track category.key) {
+              <mat-option [value]="category.key">
+                {{ category.displayName }}
+              </mat-option>
+            }
+          </mat-select>
+          <mat-hint>Email sonuna eklenecek imza kategorisini seçin</mat-hint>
+          <mat-error>İmza kategorisi seçimi zorunludur</mat-error>
+        </mat-form-field>
+
+        <!-- Sender Email Category Selection (Sadece merkez personeli için görünür) -->
+        @if (isMerkezPersoneli()) {
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Gönderici Email Hesabı</mat-label>
+            <mat-select formControlName="gondericiKategori" required>
+              @for (sender of senderCategories(); track sender.key) {
+                <mat-option [value]="sender.key">
+                  {{ sender.displayName }} ({{ sender.email }})
+                </mat-option>
+              }
+            </mat-select>
+            <mat-hint>Hangi email hesabından gönderileceğini seçin</mat-hint>
+            <mat-error>Gönderici email seçimi zorunludur</mat-error>
+          </mat-form-field>
+        }
+
+        <!-- SunEditor Content -->
+        <div class="editor-wrapper">
+          <label class="editor-label">Duyuru İçeriği *</label>
+          <div #suneditor
+            [ngClass]="{'editor-invalid': announcementForm.get('icerik')?.invalid && announcementForm.get('icerik')?.touched}">
+          </div>
+        </div>
+        <div class="editor-errors">
+          @if (announcementForm.get('icerik')?.hasError('required') && announcementForm.get('icerik')?.touched) {
+            <mat-error class="editor-error">İçerik zorunludur</mat-error>
+          }
+          @if (announcementForm.get('icerik')?.hasError('minlength') && announcementForm.get('icerik')?.touched) {
+            <mat-error class="editor-error">En az 10 karakter olmalıdır</mat-error>
+          }
+        </div>
+
+        <!-- İki Aşamalı Onay Sistemi Bilgisi -->
+        @if (currentUser().role === 'EDITOR' || currentUser().role === 'COORDINATOR') {
+          <div class="info-message info-approval-flow">
+            <mat-icon>info</mat-icon>
+            <div>
+              <strong>İki Aşamalı Onay Süreci:</strong>
+              <p>1. Kontrolör onayı</p>
+              <p>2. Yönetici onayı</p>
+              <p>Duyurunuz onaya gönderildikten sonra önce Kontrolörler tarafından incelenecek ve uygun bir Yönetici'ye yönlendirilecektir.</p>
+            </div>
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Step 2: Attachments -->
+    <mat-card class="form-section">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>attach_file</mat-icon>
+          Dosya Ekleri (İsteğe Bağlı)
+        </mat-card-title>
+      </mat-card-header>
+
+      <mat-card-content>
+        <!-- File Upload with Drag & Drop -->
+        <div
+          class="file-upload-zone"
+          [class.drag-over]="isDraggingOver()"
+          (dragover)="onDragOver($event)"
+          (dragleave)="onDragLeave($event)"
+          (drop)="onDrop($event)"
+          (click)="fileInput.click()">
+
+          <input
+            type="file"
+            #fileInput
+            multiple
+            (change)="onFileSelected($event)"
+            style="display: none">
+
+            <div class="upload-content">
+              <mat-icon class="upload-icon">cloud_upload</mat-icon>
+              <p class="upload-text">
+                <strong>Dosyaları sürükleyin veya tıklayın</strong>
+              </p>
+              <span class="upload-hint">Maksimum 10 MB, birden fazla dosya seçilebilir</span>
+            </div>
+          </div>
+
+          @if (uploadProgress() > 0 && uploadProgress() < 100) {
+            <mat-progress-bar mode="determinate" [value]="uploadProgress()"></mat-progress-bar>
+          }
+
+          <!-- Uploaded Files List -->
+          @if (uploadedFiles().length > 0) {
+            <div class="files-list">
+              @for (file of uploadedFiles(); track $index) {
+                <mat-card class="file-card">
+                  <mat-card-content>
+                    <div class="file-info">
+                      <mat-icon class="file-icon">insert_drive_file</mat-icon>
+                      <div class="file-details">
+                        <a
+                          target="_blank"
+                          [href]="getFileUrl(file.id)"
+                          class="file-name-link">
+                          {{ file.dosyaAdi }}
+                        </a>
+                        <span class="file-size">{{ formatFileSize(file.dosyaBoyutu) }}</span>
+                      </div>
+                    </div>
+
+                    <button
+                      mat-icon-button
+                      color="warn"
+                      (click)="removeFile(file.id)"
+                      matTooltip="Dosyayı Kaldır">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </mat-card-content>
+                </mat-card>
+              }
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Step 3: Recipients -->
+      <mat-card class="form-section">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>people</mat-icon>
+            Alıcılar
+          </mat-card-title>
+        </mat-card-header>
+
+        <mat-card-content>
+          <!-- Email Groups Selection -->
+          <div class="section-label">
+            <mat-icon>group</mat-icon>
+            <span>E-posta Grupları Seçin</span>
+          </div>
+
+          @if (emailGroups().length === 0) {
+            <div class="empty-state">
+              <mat-icon>info</mat-icon>
+              <p>Aktif e-posta grubu bulunamadı</p>
+            </div>
+          } @else {
+            <!-- All Groups -->
+            <div class="section-label">
+              <mat-icon>list</mat-icon>
+              <span>Tüm Gruplar</span>
+            </div>
+            <div class="groups-grid">
+              @for (group of emailGroups(); track group.id) {
+                <mat-card
+                  class="group-card"
+                  [class.selected]="isGroupSelected(group.id)"
+                  (click)="toggleGroup(group.id)">
+                  <mat-card-content>
+                    <div class="group-header">
+                      <mat-checkbox
+                        [checked]="isGroupSelected(group.id)"
+                        (click)="$event.stopPropagation()"
+                        (change)="toggleGroup(group.id)">
+                      </mat-checkbox>
+                      <mat-icon class="group-icon">{{ getIconName(group.grupTipi) }}</mat-icon>
+                      <!-- <mat-icon class="group-icon">{{ group.grupTipi === 'STATIK' ? 'group' : group.grupTipi === 'DINAMIK' ? 'sync' : 'dns' }}</mat-icon> -->
+                    </div>
+
+                    <h3 class="group-name">
+                      {{ group.grupAdi }}
+                    </h3>
+
+                    @if (group.aciklama) {
+                      <p class="group-description">{{ group.aciklama }}</p>
+                    }
+
+                    <div class="group-footer">
+                      <mat-chip class="member-count">
+                        <mat-icon>person</mat-icon>
+                        {{ group.uyeSayisi }} üye
+                      </mat-chip>
+                      <mat-chip [class]="'type-chip type-' + group.grupTipi.toLowerCase()">
+                        {{ group.grupTipi }}
+                      </mat-chip>
+                    </div>
+                  </mat-card-content>
+                </mat-card>
+              }
+            </div>
+          }
+
+          <mat-divider class="section-divider"></mat-divider>
+
+          <!-- Manual Email Addresses -->
+          <div class="section-label">
+            <mat-icon>email</mat-icon>
+            <span>Manuel E-posta Adresleri Ekle</span>
+          </div>
+
+          <div class="email-input-container">
+            <mat-form-field appearance="outline" class="email-input">
+              <mat-label>E-posta Adresi</mat-label>
+              <input
+                matInput
+                [formControl]="emailControl"
+                placeholder="ornek@deu.edu.tr"
+                (keyup.enter)="addEmail()">
+                <mat-hint>@deu.edu.tr uzantılı e-postalar</mat-hint>
+              </mat-form-field>
+
+              <button
+                mat-raised-button
+                color="primary"
+                (click)="addEmail()"
+                [disabled]="!emailControl.value">
+                <mat-icon>add</mat-icon>
+                Ekle
+              </button>
+            </div>
+
+            @if (manualEmails().length > 0) {
+              <div class="email-chips">
+                @for (email of manualEmails(); track email) {
+                  <mat-chip class="email-chip">
+                    {{ email }}
+                    <button matChipRemove (click)="removeEmail(email)">
+                      <mat-icon>cancel</mat-icon>
+                    </button>
+                  </mat-chip>
+                }
+              </div>
+            }
+
+            <!-- Recipients Summary -->
+            <div class="recipients-summary">
+              <mat-icon>info</mat-icon>
+              <span>
+                <strong>{{ selectedGroups().length }}</strong> grup ve
+                <strong>{{ manualEmails().length }}</strong> manuel e-posta seçildi
+              </span>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+
+        <!-- ADMIN/MANAGER için Direkt Gönderim Onayı (Sadece edit mode'da) -->
+        @if ((currentUser().role === 'ADMIN' || currentUser().role === 'MANAGER') && isEditMode()) {
+          <mat-card class="form-section">
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon>send</mat-icon>
+                Direkt Gönderim Onayı
+              </mat-card-title>
+            </mat-card-header>
+
+            <mat-card-content>
+              <div class="approval-confirmation-wrapper">
+                <mat-checkbox
+                  [(ngModel)]="approvalConfirmed"
+                  [ngModelOptions]="{standalone: true}"
+                  class="approval-checkbox">
+                  <span class="approval-text">
+                    <mat-icon class="warning-icon">warning_amber</mat-icon>
+                    <strong>Bu duyuruyu onay süreci atlanarak şimdi göndermek istiyorum</strong>
+                  </span>
+                </mat-checkbox>
+                <p class="approval-hint">
+                  <mat-icon>info</mat-icon>
+                  İşaretlediğinizde "Onayla ve Gönder" butonu aktif olur. Duyuru direkt alıcılara gönderilir.
+                </p>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        }
+
+        <!-- Açıklama Alanı -->
+        <mat-card class="form-section">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon>description</mat-icon>
+              Açıklama
+            </mat-card-title>
+          </mat-card-header>
+
+          <mat-card-content>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Duyuru Açıklaması (Opsiyonel)</mat-label>
+              <textarea
+                matInput
+                formControlName="aciklama"
+                rows="4"
+                maxlength="500"
+              placeholder="Duyuru ile ilgili ek açıklama veya notlar..."></textarea>
+              <mat-hint align="end">{{ announcementForm.get('aciklama')?.value?.length || 0 }}/500</mat-hint>
+            </mat-form-field>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Action Buttons -->
+        <div class="form-actions">
+          <div class="left-actions">
+            <button
+              mat-stroked-button
+              type="button"
+              (click)="previewAnnouncement()"
+              [disabled]="!isEditMode() || !announcementForm.get('icerik')?.value || loading()">
+              <mat-icon>visibility</mat-icon>
+              Önizleme
+            </button>
+
+            @if (userRole() !== 'VIEWER') {
+              <button
+                mat-stroked-button
+                type="button"
+                (click)="sendTestEmail()"
+                [disabled]="!isEditMode() || !announcementForm.get('icerik')?.value || loading()">
+                <mat-icon>drafts</mat-icon>
+                Test E-postası Gönder
+              </button>
+            }
+
+            @if (isEditMode()) {
+              <button
+                mat-stroked-button
+                type="button"
+                (click)="viewHistory()"
+                [disabled]="loading()">
+                <mat-icon>history</mat-icon>
+                Duyuru Geçmişi
+              </button>
+            }
+          </div>
+
+          <div class="right-actions">
+            <button
+              mat-raised-button
+              type="button"
+              (click)="cancel()"
+              [disabled]="loading()">
+              <mat-icon>cancel</mat-icon>
+              İptal
+            </button>
+
+            @if (userRole() !== 'VIEWER') {
+              <button
+                mat-raised-button
+                color="accent"
+                type="button"
+                (click)="saveDraft()"
+                [disabled]="loading()">
+                <mat-icon>save</mat-icon>
+                {{ isEditMode() ? 'Güncelle' : 'Taslak Olarak Kaydet' }}
+              </button>
+            }
+
+            <!-- EDITOR: Onaya Gönder (ONAYLANDI durumunda gizli) -->
+            @if (currentUser().role === 'EDITOR' && announcementStatus() !== AnnouncementStatus.ONAYLANDI) {
+              <button
+                mat-raised-button
+                color="primary"
+                type="button"
+                (click)="submitForApproval()"
+                [disabled]="!isEditMode() || loading()">
+                <mat-icon>send</mat-icon>
+                Onaya Gönder
+              </button>
+            }
+
+            <!-- EDITOR + ONAYLANDI: Gönder butonu -->
+            @if (currentUser().role === 'EDITOR' && announcementStatus() === AnnouncementStatus.ONAYLANDI) {
+              <button
+                mat-raised-button
+                color="warn"
+                type="button"
+                (click)="sendApprovedAnnouncement()"
+                [disabled]="announcementForm.invalid || loading()">
+                <mat-icon>send</mat-icon>
+                Gönder
+              </button>
+            }
+
+            <!-- ADMIN/MANAGER: Onayla ve Gönder -->
+            @if (currentUser().role === 'ADMIN' || currentUser().role === 'MANAGER') {
+              <button
+                mat-raised-button
+                color="warn"
+                type="button"
+                (click)="approveAndSend()"
+                [disabled]="!approvalConfirmed() || announcementForm.invalid || loading()">
+                <mat-icon>check_circle</mat-icon>
+                Onayla ve Gönder
+              </button>
+            }
+          </div>
+        </div>
+      </form>
+
+      <!-- Loading Overlay -->
+      @if (loading()) {
+        <div class="loading-overlay">
+          <mat-spinner diameter="50"></mat-spinner>
+          <p>İşleminiz gerçekleştiriliyor...</p>
+        </div>
+      }
+    </div>

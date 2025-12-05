@@ -1,0 +1,62 @@
+/* Container & Page Header - now using global classes from components.css */
+
+.schedule-form-card {
+  margin-bottom: var(--space-lg);
+}
+
+.schedule-form {
+  padding: var(--space-md);
+}
+
+.form-row {
+  display: flex;
+  gap: var(--space-md);
+  align-items: flex-start;
+}
+
+.full-width {
+  flex: 1;
+}
+
+/* Empty state - now using global .empty-state from components.css */
+
+.schedule-table {
+  width: 100%;
+}
+
+/* Loading overlay - now using global .loading-overlay from components.css */
+
+/* Schedule Type Radio Group */
+.schedule-type-group {
+  display: flex;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-lg);
+  padding: var(--space-md);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.recurring-schedule {
+  margin-top: var(--space-md);
+  padding: var(--space-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+}
+
+.schedule-preview {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  margin-top: var(--space-md);
+  background: #e3f2fd;
+  border-left: 4px solid #2196f3;
+  border-radius: var(--radius-sm);
+  color: #1565c0;
+  font-weight: 500;
+}
+
+.schedule-preview mat-icon {
+  color: #2196f3;
+}

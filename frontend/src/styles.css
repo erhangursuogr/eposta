@@ -1,0 +1,108 @@
+/* ================================
+   Import Design System
+   ================================ */
+@import './styles/variables.css';
+@import './styles/utilities.css';
+@import './styles/components.css';
+
+/* ================================
+   Global Styles
+   ================================ */
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: var(--font-family-base);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color var(--transition-base), color var(--transition-base);
+}
+
+.page {
+  display: flex;
+  height: full;
+  min-height: 100vh;
+}
+
+.page-center {
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+}
+
+/* DEU Colors */
+.background-primary-color {
+  background-color: var(--deu-blue) !important;
+}
+
+.primary-color {
+  color: var(--deu-blue) !important;
+}
+
+/* ================================
+   Material Component Overrides
+   ================================ */
+
+/* Material Button Overrides */
+mat-flat-button {
+  background-color: var(--deu-blue) !important;
+  color: white !important;
+}
+
+mat-stroked-button {
+  border-color: var(--deu-blue) !important;
+  color: var(--deu-blue) !important;
+}
+
+/* Material Cards */
+.mat-mdc-card {
+  background: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Material Form Fields */
+.mat-mdc-form-field {
+  color: var(--text-primary) !important;
+}
+
+/* Material Tables */
+.mat-mdc-table {
+  background: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Custom Button Classes - Using CSS Variables */
+.onay-flat-button {
+  background-color: var(--btn-onay-bg) !important;
+  border: 1px solid var(--btn-onay-border) !important;
+  color: white !important;
+  border-radius: var(--radius-lg);
+  padding: 10px 20px;
+  font-weight: var(--font-weight-bold);
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-slow) !important;
+  cursor: pointer;
+}
+
+.onay-flat-button:hover {
+  background-color: var(--btn-onay-hover) !important;
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+.iptal-flat-button {
+  background-color: var(--btn-iptal-bg) !important;
+  border: 1px solid var(--btn-iptal-border) !important;
+  color: white !important;
+  border-radius: var(--radius-lg);
+  padding: 8px 16px;
+  font-weight: var(--font-weight-bold);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-slow) !important;
+  cursor: pointer;
+}
+
+.iptal-flat-button:hover {
+  background-color: var(--btn-iptal-hover) !important;
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}

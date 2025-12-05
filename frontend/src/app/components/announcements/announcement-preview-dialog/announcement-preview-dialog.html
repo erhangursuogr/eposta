@@ -1,0 +1,177 @@
+<div class="preview-dialog">
+  @if (loading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="50"></mat-spinner>
+      <p>Duyuru yükleniyor...</p>
+    </div>
+  } @else if (announcement()) {
+    <!-- Header -->
+    <div mat-dialog-title class="dialog-header">
+      <div class="header-content">
+        <mat-icon class="header-icon">visibility</mat-icon>
+        <h2>Duyuru Önizleme</h2>
+      </div>
+      <button mat-icon-button (click)="close()" class="close-btn">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <!-- Content -->
+    <div mat-dialog-content class="dialog-content">
+      <!-- Status & Basic Info -->
+      <div class="info-section">
+        <div class="info-row">
+          <span class="label">Durum:</span>
+          <mat-chip [color]="getStatusColor(announcement()!.durum)">
+            {{ getStatusText(announcement()!.durum) }}
+          </mat-chip>
+        </div>
+        <div class="info-row">
+          <span class="label">Oluşturan:</span>
+          <span class="value">{{ announcement()!.olusturanKullaniciAdi }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Oluşturma Tarihi:</span>
+          <span class="value">{{ announcement()!.olusturmaTarihi | date:'dd.MM.yyyy HH:mm' }}</span>
+        </div>
+        @if (announcement()!.gonderimTarihi) {
+          <div class="info-row">
+            <span class="label">Gönderim Tarihi:</span>
+            <span class="value">{{ announcement()!.gonderimTarihi | date:'dd.MM.yyyy HH:mm' }}</span>
+          </div>
+        }
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <!-- Tabs -->
+      <mat-tab-group class="preview-tabs">
+        <!-- Genel Bilgiler -->
+        <mat-tab label="Genel Bilgiler">
+          <div class="tab-content">
+            <div class="field-group">
+              <label>Konu</label>
+              <div class="field-value">{{ announcement()!.konu }}</div>
+            </div>
+
+            <hr >
+
+            <div class="field-group">
+              <label>İçerik</label>
+              @if (signature()) {
+                <div class="field-value html-content" [innerHTML]="getSafeHtml(signature())"></div>
+              } @else {
+                <div class="field-value html-content" [innerHTML]="getSafeHtml(announcement()!.icerik)"></div>
+              }
+            </div>
+
+            <hr >
+
+            @if (announcement()!.aciklama) {
+              <div class="field-group">
+                <label>Açıklama</label>
+                <div class="field-value">{{ announcement()!.aciklama }}</div>
+              </div>
+            } @else {
+              <div class="field-group">
+                <label>Açıklama</label>
+                <div class="field-value" style="color: var(--text-tertiary); font-style: italic;">Açıklama eklenmemiş</div>
+              </div>
+            }
+          </div>
+        </mat-tab>
+
+        <!-- Alıcılar -->
+        <mat-tab label="Alıcılar">
+          <div class="tab-content">
+            <!-- Debug: {{ announcement()!.toplamAliciSayisi }} -->
+            <div class="recipients-summary">
+              @if (recipientGroups().length > 0) {
+                <div class="summary-item">
+                  <mat-icon>group</mat-icon>
+                  <span>{{ recipientGroups().length }} Grup</span>
+                </div>
+              }
+              <div class="summary-item primary">
+                <mat-icon>people</mat-icon>
+                <span>Toplam {{ announcement()?.toplamAliciSayisi || 0 }} Alıcı</span>
+              </div>
+            </div>
+
+            @if (recipientGroups().length > 0) {
+              <div class="groups-section">
+                <h4>Alıcı Grupları:</h4>
+                <div class="group-list">
+                  @for (group of recipientGroups(); track group.id) {
+                    <div class="group-item">
+                      <div class="group-header">
+                        <mat-icon class="group-icon">group</mat-icon>
+                        <div class="group-info">
+                          <div class="group-name">{{ group.grupAdi }}</div>
+                          <div class="group-meta">
+                            <span class="group-type">{{ group.grupTipi }}</span>
+                            @if (group.aciklama) {
+                              <span class="group-desc">{{ group.aciklama }}</span>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            } @else {
+              <div class="empty-state">
+                <mat-icon>group_off</mat-icon>
+                <p>Alıcı grubu eklenmemiş</p>
+              </div>
+            }
+          </div>
+        </mat-tab>
+
+        <!-- Dosyalar -->
+        <mat-tab label="Dosyalar">
+          <div class="tab-content">
+            @if (files().length > 0) {
+              <div class="files-list">
+                @for (file of files(); track file.id) {
+                  <div class="file-item clickable" (click)="downloadFile(file)">
+                    <mat-icon>attachment</mat-icon>
+                    <div class="file-info">
+                      <div class="file-name">{{ file.dosyaAdi }}</div>
+                      <div class="file-size">{{ (file.dosyaBoyutu / 1024).toFixed(2) }} KB</div>
+                    </div>
+                    <mat-icon class="download-icon">download</mat-icon>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="empty-state">
+                <mat-icon>folder_open</mat-icon>
+                <p>Dosya eklenmemiş</p>
+              </div>
+            }
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <!-- Actions -->
+    <div mat-dialog-actions class="dialog-actions">
+      <button mat-button (click)="close()">
+        <mat-icon>close</mat-icon>
+        Kapat
+      </button>
+      @if (announcement()!.durum === 'TASLAK' || announcement()!.durum === 'REDDEDILDI') {
+        <button mat-raised-button color="primary" (click)="editAnnouncement()">
+          <mat-icon>edit</mat-icon>
+          Düzenle
+        </button>
+      }
+    </div>
+  }
+</div>

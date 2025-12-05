@@ -1,0 +1,56 @@
+.error-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #aac0e0 100%);
+  padding: var(--space-2xl);
+}
+
+.error-content {
+  text-align: center;
+  max-width: 600px;
+  padding: var(--space-4xl);
+  background: var(--bg-primary);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+}
+
+.error-icon {
+  font-size: 120px;
+  width: 120px;
+  height: 120px;
+  color: var(--primary);
+  margin-bottom: var(--space-lg);
+}
+
+.error-code {
+  font-size: 6rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--primary);
+  margin: 0;
+  line-height: 1;
+}
+
+.error-title {
+  font-size: 2rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin: var(--space-lg) 0;
+}
+
+.error-message {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-xl);
+  line-height: var(--line-height-relaxed);
+}
+
+button {
+  padding: var(--space-md) var(--space-xl);
+  font-size: 1rem;
+}
+
+button mat-icon {
+  margin-right: var(--space-xs);
+}

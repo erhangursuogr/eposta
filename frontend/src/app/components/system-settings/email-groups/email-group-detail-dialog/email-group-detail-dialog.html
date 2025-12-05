@@ -1,0 +1,113 @@
+<div class="detail-dialog">
+  @if (loading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="50"></mat-spinner>
+      <p>Yükleniyor...</p>
+    </div>
+  } @else if (group()) {
+    <!-- Header -->
+    <div mat-dialog-title class="dialog-header">
+      <div class="header-content">
+        <mat-icon>visibility</mat-icon>
+        <h2>Grup Detayları</h2>
+      </div>
+      <button mat-icon-button (click)="close()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <mat-dialog-content class="dialog-content">
+      <!-- Genel Bilgiler -->
+      <div class="info-section">
+        <div class="info-row">
+          <span class="label">Grup Adı:</span>
+          <span class="value">{{ group()!.grupAdi }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Tip:</span>
+          <mat-chip [class]="getGrupTipiBadge(group()!.grupTipi)">
+            {{ getGrupTipiText(group()!.grupTipi) }}
+          </mat-chip>
+        </div>
+        <div class="info-row">
+          <span class="label">Üye Sayısı:</span>
+          <span class="value">{{ group()!.uyeSayisi }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Kullanım:</span>
+          @if (group()!.bccOnly) {
+            <mat-chip class="bcc-only-chip">Sadece BCC</mat-chip>
+          } @else {
+            <mat-chip class="flexible-chip">TO/CC/BCC</mat-chip>
+          }
+        </div>
+        @if (group()!.aciklama) {
+          <div class="info-row">
+            <span class="label">Açıklama:</span>
+            <span class="value">{{ group()!.aciklama }}</span>
+          </div>
+        }
+        <div class="info-row">
+          <span class="label">Oluşturma Tarihi:</span>
+          <span class="value">{{ formatDate(group()!.olusturmaTarihi) }}</span>
+        </div>
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <!-- Dinamik Grup Bilgileri -->
+      @if (group()!.grupTipi === 'DINAMIK') {
+        <div class="info-section">
+          <h3>Dinamik Grup Ayarları</h3>
+          <div class="info-row">
+            <span class="label">View Adı:</span>
+            <span class="value mono">{{ group()!.viewAdi }}</span>
+          </div>
+          @if (group()!.filterKosulu) {
+            <div class="info-row">
+              <span class="label">Filter Koşulu:</span>
+              <span class="value mono">{{ group()!.filterKosulu }}</span>
+            </div>
+          }
+          <p class="info-note">
+            <mat-icon>info</mat-icon>
+            Üye listesi her duyuru gönderiminde real-time olarak sorgulanır
+          </p>
+        </div>
+        <mat-divider></mat-divider>
+      }
+
+      <!-- Üyeler (NORMAL/STATIK için) -->
+      @if (group()!.grupTipi === 'NORMAL' || group()!.grupTipi === 'STATIK') {
+        <div class="members-section">
+          <h3>Grup Üyeleri ({{ members().length }})</h3>
+          @if (members().length > 0) {
+            <div class="members-list">
+              @for (member of members(); track member.id) {
+                <div class="member-item">
+                  <mat-icon>person</mat-icon>
+                  <div class="member-info">
+                    <div class="member-email">{{ member.email }}</div>
+                    @if (member.adSoyad) {
+                      <div class="member-name">{{ member.adSoyad }}</div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="empty-text">Henüz üye eklenmemiş</p>
+          }
+        </div>
+      }
+    </mat-dialog-content>
+
+    <mat-divider></mat-divider>
+
+    <mat-dialog-actions>
+      <button mat-button (click)="close()">Kapat</button>
+    </mat-dialog-actions>
+  }
+</div>

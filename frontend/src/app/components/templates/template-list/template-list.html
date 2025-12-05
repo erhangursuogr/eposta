@@ -1,0 +1,162 @@
+<div class="page-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <mat-icon class="title-icon">description</mat-icon>
+        Şablon Yönetimi
+      </h1>
+      <p class="page-description">Duyuru şablonlarını yönetin ve yeniden kullanın</p>
+    </div>
+    @if (canManageTemplates()) {
+      <button mat-raised-button color="primary" (click)="navigateToCreate()">
+        <mat-icon class="title-icon">add</mat-icon>
+        Yeni Şablon
+      </button>
+    }
+  </div>
+
+  <!-- Filters -->
+  <mat-card class="filters-card">
+    <mat-card-content>
+      <div class="filters-container">
+        <mat-form-field class="filter-field search-field" appearance="outline">
+          <mat-label style="font-weight: 500;">Şablon Ara...</mat-label>
+          <input matInput placeholder="Şablon adı veya konu..." [(ngModel)]="searchTerm" (ngModelChange)="searchTerm.set($event)">
+          <mat-icon matPrefix>search</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field class="filter-field" appearance="outline">
+          <mat-label style="font-weight: 500;">Durum</mat-label>
+          <mat-select [(ngModel)]="filterStatus" (ngModelChange)="filterStatus.set($event)">
+            <mat-option value="ALL">Tümü</mat-option>
+            <mat-option value="Y">Aktif</mat-option>
+            <mat-option value="N">Pasif</mat-option>
+          </mat-select>
+          <mat-icon matPrefix>filter_list</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field class="filter-field" appearance="outline">
+          <mat-label style="font-weight: 500;">Kategori</mat-label>
+          <mat-select [(ngModel)]="filterCategory" (ngModelChange)="filterCategory.set($event)">
+            <mat-option [value]="null">Tümü</mat-option>
+            @for (category of usedCategories(); track category.id) {
+              <mat-option [value]="category.id">{{ category.kategoriAdi }}</mat-option>
+            }
+          </mat-select>
+          <mat-icon matPrefix>label</mat-icon>
+        </mat-form-field>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Results Info -->
+  @if (!loading()) {
+    <div class="results-info">
+      <span><strong>{{ filteredTemplates().length }}</strong> şablon bulundu</span>
+    </div>
+  }
+
+  <!-- Loading -->
+  @if (loading()) {
+    <app-loading message="Şablonlar yükleniyor..." />
+  }
+
+  <!-- Empty State -->
+  @else if (filteredTemplates().length === 0) {
+    <app-empty-state
+      icon="description"
+      title="Şablon Bulunamadı"
+      description="Henüz hiç şablon eklenmemiş veya arama kriterlerinize uygun şablon yok."
+      [actionLabel]="canManageTemplates() ? 'İlk Şablonu Oluştur' : undefined"
+      (action)="navigateToCreate()"
+    />
+  }
+
+  <!-- Templates Grid -->
+  @else {
+    <div class="templates-grid">
+      @for (template of filteredTemplates(); track template.id) {
+        <mat-card class="template-card">
+          <mat-card-header>
+            <div class="card-header-content">
+              <div class="card-title-section">
+                <mat-card-title>
+                  {{ template.sablonAdi }}
+                </mat-card-title>
+                <mat-chip [class]="'status-chip status-' + (template.aktif === 'Y' ? 'green' : 'red')">
+                  <mat-icon class="chip-icon">{{ template.aktif === 'Y' ? 'check_circle' : 'cancel' }}</mat-icon>
+                  {{ template.aktif === 'Y' ? 'Aktif' : 'Pasif' }}
+                </mat-chip>
+              </div>
+            </div>
+          </mat-card-header>
+
+          <mat-card-content>
+            <p class="card-content">
+              @if (template.konuSablonu) {
+                {{ template.konuSablonu }}
+              } @else {
+                Konu belirtilmemiş
+              }
+            </p>
+
+            <div class="card-meta">
+              <div class="meta-item">
+                <mat-icon>event</mat-icon>
+                <span>{{ formatDate(template.olusturmaTarihi) }}</span>
+              </div>
+
+              <div class="meta-item">
+                <mat-icon>folder_open</mat-icon>
+                <span>{{ template.kullanimSayisi || 0 }} kullanım</span>
+              </div>
+
+              @if (template.kategori) {
+                <div class="meta-item category-item" [style.color]="template.kategori.renk">
+                  <mat-icon [style.color]="template.kategori.renk">{{ template.kategori.ikon }}</mat-icon>
+                  <span class="category-name">{{ template.kategori.kategoriAdi }}</span>
+                </div>
+              }
+            </div>
+
+            <div class="card-actions">
+              <!-- Tüm roller "Kullan" butonunu görebilir -->
+              <button mat-raised-button color="accent" (click)="useTemplate(template.id)"
+                      [disabled]="template.aktif === 'N'" class="btn-use">
+                <mat-icon>note_add</mat-icon>
+                Kullan
+              </button>
+
+              <!-- Sadece ADMIN ve COORDINATOR düzenleme yapabilir -->
+              @if (canManageTemplates()) {
+                <button mat-stroked-button color="primary" (click)="navigateToEdit(template.id)"
+                        [disabled]="template.aktif === 'N'" class="btn-edit">
+                  <mat-icon>edit</mat-icon>
+                  Düzenle
+                </button>
+                <button mat-icon-button [matMenuTriggerFor]="menu" class="btn-more">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #menu="matMenu">
+                  <button mat-menu-item (click)="duplicate(template)">
+                    <mat-icon>content_copy</mat-icon>
+                    Çoğalt
+                  </button>
+                  <button mat-menu-item (click)="toggleActive(template)">
+                    <mat-icon>{{ template.aktif === 'Y' ? 'visibility_off' : 'visibility' }}</mat-icon>
+                    {{ template.aktif === 'Y' ? 'Pasif Et' : 'Aktif Et' }}
+                  </button>
+                  <button mat-menu-item (click)="delete(template)">
+                    <mat-icon>delete</mat-icon>
+                    Sil
+                  </button>
+                </mat-menu>
+              }
+            </div>
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>
+  }
+</div>

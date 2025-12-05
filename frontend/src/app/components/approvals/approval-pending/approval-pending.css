@@ -1,0 +1,344 @@
+/* Container is now global - using .page-container from components.css */
+
+/* ========================================
+   HEADER & LOADING - Using global classes from components.css
+   ======================================== */
+
+/* ========================================
+   LOADING & EMPTY STATE - Using global components from common/
+   ======================================== */
+
+/* ========================================
+   ANNOUNCEMENTS LIST (Tek Sütun)
+   ======================================== */
+.announcements-list {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.announcements-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+  gap: var(--space-lg);
+}
+
+.announcement-card {
+  background: var(--bg-primary) !important;
+  box-shadow: var(--shadow-md) !important;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.announcement-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg) !important;
+}
+
+.announcement-card mat-card-header {
+  background: var(--bg-secondary);
+  padding: 20px !important;
+  margin: -16px -16px 20px -16px;
+}
+
+.card-header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.header-text {
+  flex: 1;
+}
+
+.announcement-card mat-card-title {
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  color: var(--text-primary) !important;
+  margin-bottom: var(--space-xs) !important;
+}
+
+.announcement-card mat-card-subtitle {
+  font-size: 14px !important;
+  color: var(--text-secondary) !important;
+}
+
+/* ========================================
+   ANNOUNCEMENT INFO
+   ======================================== */
+.announcement-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.info-item mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: var(--primary-color);
+}
+
+.coordinator-note {
+  background: rgba(33, 150, 243, 0.08);
+  padding: 12px;
+  border-radius: var(--border-radius);
+  border-left: 3px solid var(--primary-color);
+  font-style: italic;
+}
+
+.divider {
+  margin: 20px 0 !important;
+}
+
+/* ========================================
+   ACTION SELECTION
+   ======================================== */
+.action-selection {
+  margin: 24px 0;
+}
+
+.action-prompt {
+  margin: 0 0 16px 0;
+  font-weight: 500;
+  color: var(--text-primary);
+  font-size: 15px;
+}
+
+.action-toggle {
+  display: flex;
+  gap: 16px;
+}
+
+.action-toggle button {
+  flex: 1;
+  justify-content: center;
+  border: 2px solid var(--border-color);
+  transition: all 0.2s;
+}
+
+.action-toggle button.active {
+  font-weight: 600;
+}
+
+/* "Onaylamak İstiyorum" butonu aktif durumda - Yeşil */
+.action-toggle button.active:first-child {
+  border-color: #4CAF50;
+  background-color: rgba(76, 175, 80, 0.1);
+  color: #2e7d32;
+}
+
+.action-toggle button.active:first-child mat-icon {
+  color: #4CAF50;
+}
+
+/* "Reddetmek İstiyorum" butonu aktif durumda - Kırmızı */
+.action-toggle button.active:last-child {
+  border-color: #f44336;
+  background-color: rgba(244, 67, 54, 0.1);
+  color: #c62828;
+}
+
+.action-toggle button.active:last-child mat-icon {
+  color: #f44336;
+}
+
+.action-toggle button mat-icon {
+  margin-right: var(--space-xs);
+}
+
+/* ========================================
+   APPROVAL/REJECTION PANELS
+   ======================================== */
+.approval-panel,
+.rejection-panel {
+  margin-top: 20px;
+  padding: 20px;
+  border-radius: var(--border-radius);
+  animation: slideDown 0.3s ease-out;
+}
+
+.approval-panel {
+  background: rgba(76, 175, 80, 0.05);
+  border: 2px solid var(--success-color);
+}
+
+.approval-panel mat-form-field {
+  margin-bottom: var(--space-md);
+}
+
+.rejection-panel {
+  background: rgba(244, 67, 54, 0.05);
+  border: 2px solid var(--error-color);
+}
+
+.rejection-panel mat-form-field {
+  margin-bottom: var(--space-md);
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.panel-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.panel-header mat-icon {
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.full-width-button {
+  width: 100%;
+  margin-top: 12px;
+  height: 48px;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+/* Onay butonu - Yeşil */
+.approval-panel .full-width-button {
+  background-color: #4CAF50 !important;
+  color: white !important;
+}
+
+.approval-panel .full-width-button:hover:not([disabled]) {
+  background-color: #45a049 !important;
+}
+
+.approval-panel .full-width-button:disabled {
+  background-color: #cccccc !important;
+  color: #666666 !important;
+}
+
+/* Red butonu - Kırmızı */
+.rejection-panel .full-width-button {
+  background-color: #f44336 !important;
+  color: white !important;
+}
+
+.rejection-panel .full-width-button:hover:not([disabled]) {
+  background-color: #da190b !important;
+}
+
+.rejection-panel .full-width-button:disabled {
+  background-color: #cccccc !important;
+  color: #666666 !important;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.approval-section,
+.rejection-section {
+  margin-bottom: var(--space-md);
+}
+
+/* ========================================
+   ACTIONS
+   ======================================== */
+.card-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-md) !important;
+  background: var(--bg-secondary);
+  margin: var(--space-md) -16px -16px -16px !important;
+}
+
+.action-buttons {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+/* ========================================
+   STATUS CHIPS - Using global .status-chip from components.css
+   ======================================== */
+
+/* ========================================
+   APPROVE AND SEND OPTION
+   ======================================== */
+.approve-send-option {
+  margin: 16px 0;
+  padding: 12px;
+  background: rgba(255, 152, 0, 0.08);
+  border-radius: var(--border-radius);
+  border-left: 3px solid #ff9800;
+}
+
+.approve-send-option mat-checkbox {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.hint-text {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+@media (max-width: 768px) {
+  .approval-container {
+    padding: 16px;
+  }
+
+  .announcements-list {
+    gap: 24px;
+  }
+
+  .announcements-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .action-toggle {
+    flex-direction: column;
+  }
+
+  .card-actions {
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  .action-buttons {
+    width: 100%;
+  }
+
+  .action-buttons button {
+    flex: 1;
+  }
+}

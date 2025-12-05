@@ -1,0 +1,201 @@
+.page {
+  background: linear-gradient(135deg, #0f3c61 0%, #acdbff 100%);
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+.page::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  animation: pulse 15s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.3;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+}
+
+.login-card {
+  border-radius: 25px;
+  width: 100%;
+  max-width: 450px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  position: relative;
+  z-index: 1;
+}
+/*
+.login-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.25);
+}*/
+
+.title {
+  color: #004b87;
+  font-weight: 700;
+  font-size: 1.65rem;
+  letter-spacing: 0.3px;
+  margin-bottom: 4px;
+}
+
+.subtitle {
+  color: #004b87;
+  font-size: 1.1rem;
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Material Form Field Stilleri */
+::ng-deep .mat-mdc-form-field {
+  margin-bottom: 8px;
+}
+
+::ng-deep .mat-mdc-text-field-wrapper {
+  transition: all 0.3s ease;
+}
+
+::ng-deep .mat-mdc-form-field:hover .mat-mdc-text-field-wrapper {
+  box-shadow: 0 2px 8px rgba(0, 75, 135, 0.1);
+}
+
+::ng-deep .mdc-text-field--outlined:not(.mdc-text-field--disabled) .mdc-notched-outline__leading,
+::ng-deep .mdc-text-field--outlined:not(.mdc-text-field--disabled) .mdc-notched-outline__notch,
+::ng-deep .mdc-text-field--outlined:not(.mdc-text-field--disabled) .mdc-notched-outline__trailing {
+  border-color: rgba(0, 75, 135, 0.3);
+}
+
+::ng-deep .mdc-text-field--outlined:not(.mdc-text-field--disabled):hover .mdc-notched-outline__leading,
+::ng-deep .mdc-text-field--outlined:not(.mdc-text-field--disabled):hover .mdc-notched-outline__notch,
+::ng-deep .mdc-text-field--outlined:not(.mdc-text-field--disabled):hover .mdc-notched-outline__trailing {
+  border-color: rgba(0, 75, 135, 0.6);
+}
+
+::ng-deep .mdc-text-field--focused:not(.mdc-text-field--disabled) .mdc-notched-outline__leading,
+::ng-deep .mdc-text-field--focused:not(.mdc-text-field--disabled) .mdc-notched-outline__notch,
+::ng-deep .mdc-text-field--focused:not(.mdc-text-field--disabled) .mdc-notched-outline__trailing {
+  border-color: #004b87 !important;
+  border-width: 2px;
+}
+
+::ng-deep .mat-mdc-form-field-icon-prefix,
+::ng-deep .mat-mdc-form-field-icon-suffix {
+  color: #004b87;
+}
+
+/* Hata renkleri */
+::ng-deep mat-error {
+  color: #d32f2f !important;
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+/* Giriş butonu */
+.login-btn {
+  background-color: #004b87 !important;
+  color: white !important;
+  font-weight: 600;
+  padding: 15px;
+  font-size: 16px;
+  border-radius: 30px !important;
+  letter-spacing: 0.5px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 75, 135, 0.3);
+  position: relative;
+}
+
+.login-btn:hover:not(:disabled) {
+  background-color: #00376b !important;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 75, 135, 0.4);
+}
+
+.login-btn:active:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(0, 75, 135, 0.3);
+}
+
+.login-btn:disabled {
+  background-color: #b0bec5 !important;
+  color: #eceff1 !important;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Yardım butonu */
+.support-btn {
+  border: 2px solid #004b87 !important;
+  color: #004b87 !important;
+  font-weight: 500;
+  border-radius: 30px !important;
+  text-transform: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 13px 24px;
+  font-size: 12px;
+  background-color: rgba(0, 75, 135, 0.05) !important;
+  position: relative;
+}
+
+.support-btn:hover {
+  background-color: rgba(0, 75, 135, 0.15) !important;
+  border-color: #00376b !important;
+  color: #00376b !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 75, 135, 0.2);
+}
+
+.support-btn:active {
+  transform: translateY(0);
+  background-color: rgba(0, 75, 135, 0.2) !important;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .login-card {
+    max-width: 90%;
+    margin: 20px;
+    padding: 30px 20px !important;
+  }
+
+  .title {
+    font-size: 20px;
+  }
+
+  .subtitle {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-card {
+    padding: 20px 15px !important;
+  }
+
+  .title {
+    font-size: 18px;
+  }
+}

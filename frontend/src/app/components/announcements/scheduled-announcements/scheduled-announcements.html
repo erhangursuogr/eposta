@@ -1,0 +1,200 @@
+<div class="page-container">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">
+        <mat-icon class="title-icon">schedule</mat-icon>
+        Zamanlanmış Duyurular
+      </h1>
+      <p class="page-description">Zamanlama oluşturun ve yönetin</p>
+    </div>
+  </div>
+
+  <!-- Zamanlama Formu -->
+  @if (showForm()) {
+    <mat-card class="schedule-form-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>event</mat-icon>
+          Yeni Zamanlama Oluştur
+        </mat-card-title>
+        <mat-card-subtitle>{{ announcementTitle() }}</mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <form [formGroup]="scheduleForm" class="schedule-form">
+          <!-- Zamanlama Tipi -->
+          <mat-radio-group formControlName="zamanlamaTipi" class="schedule-type-group">
+            <mat-radio-button value="TEK">Tek Seferlik</mat-radio-button>
+            <mat-radio-button value="TEKRARLI">Tekrarlı</mat-radio-button>
+          </mat-radio-group>
+
+          <!-- Tek Seferlik Zamanlama -->
+          @if (scheduleForm.get('zamanlamaTipi')?.value === 'TEK') {
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label style="font-weight: 500;">Gönderim Tarihi</mat-label>
+                <input
+                  matInput
+                  [matDatepicker]="picker"
+                  formControlName="zamanlananTarih"
+                  [min]="minDate"
+                  placeholder="Tarih seçin">
+                <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                <mat-datepicker #picker></mat-datepicker>
+                <mat-error>Gönderim tarihi zorunludur</mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label style="font-weight: 500;">Gönderim Saati</mat-label>
+                <input
+                  matInput
+                  type="time"
+                  formControlName="zamanlananSaat"
+                  placeholder="HH:MM">
+                <mat-icon matIconPrefix>access_time</mat-icon>
+                <mat-error>Gönderim saati zorunludur</mat-error>
+              </mat-form-field>
+            </div>
+          }
+
+          <!-- Tekrarlı Zamanlama -->
+          @if (scheduleForm.get('zamanlamaTipi')?.value === 'TEKRARLI') {
+            <div class="recurring-schedule">
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label style="font-weight: 500;">Başlangıç Tarihi</mat-label>
+                  <input
+                    matInput
+                    [matDatepicker]="startPicker"
+                    formControlName="baslangicTarihi"
+                    [min]="minDate"
+                    placeholder="Başlangıç tarihi seçin">
+                  <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
+                  <mat-datepicker #startPicker></mat-datepicker>
+                  <mat-error>Başlangıç tarihi zorunludur</mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label style="font-weight: 500;">Başlangıç Saati</mat-label>
+                  <input
+                    matInput
+                    type="time"
+                    formControlName="baslangicSaati"
+                    placeholder="HH:MM">
+                  <mat-icon matIconPrefix>access_time</mat-icon>
+                  <mat-error>Başlangıç saati zorunludur</mat-error>
+                </mat-form-field>
+              </div>
+
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label style="font-weight: 500;">Bitiş Tarihi</mat-label>
+                  <input
+                    matInput
+                    [matDatepicker]="endPicker"
+                    formControlName="bitisTarihi"
+                    [min]="minDate"
+                    placeholder="Bitiş tarihi seçin">
+                  <mat-datepicker-toggle matIconSuffix [for]="endPicker"></mat-datepicker-toggle>
+                  <mat-datepicker #endPicker></mat-datepicker>
+                  <mat-error>Bitiş tarihi zorunludur</mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label style="font-weight: 500;">Her Kaç Günde Bir</mat-label>
+                  <input
+                    matInput
+                    type="number"
+                    formControlName="tekrarGunAraligi"
+                    min="1"
+                    max="365"
+                    placeholder="Örn: 7">
+                  <mat-icon matIconPrefix>repeat</mat-icon>
+                  <mat-hint>Örn: 7 = Her hafta, 30 = Her ay</mat-hint>
+                  <mat-error>1-365 arası bir değer girin</mat-error>
+                </mat-form-field>
+              </div>
+
+              <!-- Tekrarlama Özeti -->
+              @if (getSchedulePreview(); as preview) {
+                <div class="schedule-preview">
+                  <mat-icon>info</mat-icon>
+                  <span>{{ preview }}</span>
+                </div>
+              }
+            </div>
+          }
+        </form>
+      </mat-card-content>
+
+      <mat-card-actions align="end">
+        <button mat-button (click)="cancel()">İptal</button>
+        <button
+          mat-raised-button
+          color="primary"
+          (click)="saveSchedule()"
+          [disabled]="scheduleForm.invalid || loading()">
+          <mat-icon>save</mat-icon>
+          Zamanlamayı Kaydet
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  }
+
+  <!-- Zamanlanmış Duyurular Listesi -->
+  @if (!showForm()) {
+    <mat-card>
+      <mat-card-content>
+        @if (schedules().length === 0) {
+          <div class="empty-state">
+            <mat-icon>schedule</mat-icon>
+            <p>Henüz zamanlanmış duyuru bulunmamaktadır</p>
+          </div>
+        } @else {
+          <table mat-table [dataSource]="schedules()" class="schedule-table">
+            <!-- Date Column -->
+            <ng-container matColumnDef="zamanlananTarih">
+              <th mat-header-cell *matHeaderCellDef>Zamanlanmış Tarih</th>
+              <td mat-cell *matCellDef="let row">{{ row.zamanlananTarih | date:'dd.MM.yyyy HH:mm' }}</td>
+            </ng-container>
+
+            <!-- Status Column -->
+            <ng-container matColumnDef="durum">
+              <th mat-header-cell *matHeaderCellDef>Durum</th>
+              <td mat-cell *matCellDef="let row">
+                <mat-chip>{{ row.durum }}</mat-chip>
+              </td>
+            </ng-container>
+
+            <!-- Recipient Count Column -->
+            <ng-container matColumnDef="aliciSayisi">
+              <th mat-header-cell *matHeaderCellDef>Alıcı Sayısı</th>
+              <td mat-cell *matCellDef="let row">{{ row.aliciSayisi }}</td>
+            </ng-container>
+
+            <!-- Actions Column -->
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>İşlemler</th>
+              <td mat-cell *matCellDef="let row">
+                <button mat-icon-button color="warn" matTooltip="İptal Et">
+                  <mat-icon>cancel</mat-icon>
+                </button>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+          </table>
+        }
+      </mat-card-content>
+    </mat-card>
+  }
+
+  <!-- Loading Overlay -->
+  @if (loading()) {
+    <div class="loading-overlay">
+      <mat-spinner diameter="50"></mat-spinner>
+      <p>İşleminiz gerçekleştiriliyor...</p>
+    </div>
+  }
+</div>

@@ -1,0 +1,61 @@
+<h2 mat-dialog-title>
+  <mat-icon>folder</mat-icon>
+  Kategori Yönetimi
+</h2>
+
+<mat-dialog-content>
+  @if (loading()) {
+    <div class="loading-state">
+      <p>Kategoriler yükleniyor...</p>
+    </div>
+  } @else if (categories().length === 0) {
+    <div class="empty-state">
+      <mat-icon>folder_off</mat-icon>
+      <h3>Kategori Yok</h3>
+      <p>Henüz hiç kategori eklenmemiş.</p>
+    </div>
+  } @else {
+    <div class="categories-list">
+      @for (category of categories(); track category.id) {
+        <div class="category-item">
+          <div class="category-info">
+            <mat-icon [style.color]="category.renk">{{ category.ikon }}</mat-icon>
+            <div class="category-details">
+              <span class="category-name">{{ category.kategoriAdi }}</span>
+              <span class="category-usage">{{ getUsageCount(category.id) }} şablonda kullanılıyor</span>
+            </div>
+          </div>
+          <div class="category-actions">
+            <mat-chip [class.aktif-chip]="category.aktif === 'Y'" [class.pasif-chip]="category.aktif === 'N'">
+              {{ category.aktif === 'Y' ? 'Aktif' : 'Pasif' }}
+            </mat-chip>
+
+            <button mat-icon-button
+                    [matTooltip]="category.aktif === 'Y' ? 'Pasif Et' : 'Aktif Et'"
+                    (click)="toggleActive(category)">
+              <mat-icon>{{ category.aktif === 'Y' ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+
+            <button mat-icon-button
+                    color="warn"
+                    [matTooltip]="getUsageCount(category.id) > 0 ? 'Kullanımda olan kategori silinemez' : 'Sil'"
+                    [disabled]="getUsageCount(category.id) > 0"
+                    (click)="deleteCategory(category)">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="close()">
+    Kapat
+  </button>
+  <button mat-raised-button color="primary" (click)="openCreateDialog()">
+    <mat-icon>add</mat-icon>
+    Yeni Kategori
+  </button>
+</mat-dialog-actions>

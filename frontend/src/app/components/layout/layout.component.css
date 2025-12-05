@@ -1,0 +1,27 @@
+.example-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .example-sidenav-container {
+    flex: 1;
+  }
+
+  .content-wrapper {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--bg-tertiary);
+    padding: var(--space-xl);
+    min-height: 100vh;
+  }
+
+  .custom-sidenav {
+    width:280px;
+  }

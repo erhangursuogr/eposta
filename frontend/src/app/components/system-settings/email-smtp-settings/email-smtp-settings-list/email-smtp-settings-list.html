@@ -1,0 +1,192 @@
+<div class="page-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <mat-icon class="title-icon">email</mat-icon>
+        Duyuru SMTP Ayarları
+      </h1>
+      <p class="page-description">Email gönderim grupları için SMTP konfigürasyonlarını yönetin</p>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="createSmtpGroup()">
+        <mat-icon>add</mat-icon>
+        Yeni SMTP Grubu
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="smtp-stats">
+    <div class="stat-card primary-card">
+      <div class="stat-icon-wrapper primary-icon">
+        <mat-icon>mail</mat-icon>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Toplam SMTP Grupları</div>
+        <div class="stat-value">{{ smtpGroups().length }}</div>
+      </div>
+    </div>
+
+    <div class="stat-card info-card">
+      <div class="stat-icon-wrapper info-icon">
+        <mat-icon>settings</mat-icon>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Toplam Konfigürasyon</div>
+        <div class="stat-value">{{ totalSettingsCount() }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  @if (loading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="50"></mat-spinner>
+      <p>SMTP grupları yükleniyor...</p>
+    </div>
+  }
+
+  <!-- Empty State -->
+  @if (!loading() && smtpGroups().length === 0) {
+    <div class="empty-state">
+      <mat-icon class="empty-icon">mail_outline</mat-icon>
+      <h2>SMTP Grubu Bulunamadı</h2>
+      <p>Henüz hiç SMTP grubu oluşturulmamış. İlk grubunuzu oluşturmak için yukarıdaki butona tıklayın.</p>
+      <button mat-raised-button color="primary" (click)="createSmtpGroup()">
+        <mat-icon>add</mat-icon>
+        İlk SMTP Grubunu Oluştur
+      </button>
+    </div>
+  }
+
+  <!-- SMTP Groups -->
+  @if (!loading() && smtpGroups().length > 0) {
+    <div class="smtp-groups-container">
+      @for (group of smtpGroups(); track trackByGroup($index, group)) {
+        <div class="smtp-card" [class.expanded]="group.isExpanded">
+          <!-- Card Header -->
+          <div class="smtp-card-header" (click)="toggleGroup(group)">
+            <div class="header-left">
+              <div class="group-icon-wrapper">
+                <mat-icon>email</mat-icon>
+              </div>
+              <div class="group-info">
+                <h3 class="group-title">{{ group.displayName }}</h3>
+                <span class="group-category">{{ group.category }}</span>
+              </div>
+            </div>
+
+            <div class="header-right">
+              <button mat-icon-button class="delete-button"
+                      (click)="deleteGroup(group, $event)"
+                      [matTooltip]="'Grubu Sil'">
+                <mat-icon>delete</mat-icon>
+              </button>
+              <mat-icon class="expand-icon">
+                {{ group.isExpanded ? 'expand_less' : 'expand_more' }}
+              </mat-icon>
+            </div>
+          </div>
+
+          <!-- Card Content (Expanded) -->
+          @if (group.isExpanded) {
+            <div class="smtp-card-content">
+              <form [formGroup]="getGroupForm(group.category)!">
+                <div class="settings-grid">
+                  <!-- From Email -->
+                  <div class="setting-field">
+                    <mat-form-field appearance="outline">
+                      <mat-label>Gönderici Email</mat-label>
+                      <input matInput
+                             formControlName="fromEmail"
+                             placeholder="noreply@deu.edu.tr"
+                             autocomplete="email">
+                      <mat-icon matIconPrefix>email</mat-icon>
+                    </mat-form-field>
+                  </div>
+
+                  <!-- From Name -->
+                  <div class="setting-field">
+                    <mat-form-field appearance="outline">
+                      <mat-label>Gönderici Adı</mat-label>
+                      <input matInput
+                             formControlName="fromName"
+                             placeholder="DEÜ Eposta Sistemi"
+                             autocomplete="name">
+                      <mat-icon matIconPrefix>person</mat-icon>
+                    </mat-form-field>
+                  </div>
+
+                  <!-- SMTP Username -->
+                  <div class="setting-field">
+                    <mat-form-field appearance="outline">
+                      <mat-label>SMTP Kullanıcı Adı</mat-label>
+                      <input matInput
+                             formControlName="smtpUsername"
+                             placeholder="smtp_user@deu.edu.tr"
+                             autocomplete="username">
+                      <mat-icon matIconPrefix>account_circle</mat-icon>
+                    </mat-form-field>
+                  </div>
+
+                  <!-- SMTP Password -->
+                  <div class="setting-field">
+                    <mat-form-field appearance="outline">
+                      <mat-label>SMTP Şifre</mat-label>
+                      <input matInput
+                             type="password"
+                             formControlName="smtpPassword"
+                             placeholder="••••••••"
+                             autocomplete="current-password">
+                      <mat-icon matIconPrefix>lock</mat-icon>
+                    </mat-form-field>
+                  </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="card-actions">
+                  <button mat-stroked-button
+                          (click)="testConnection(group)"
+                          [disabled]="savingGroup() === group.category">
+                    <mat-icon>wifi_tethering</mat-icon>
+                    Bağlantı Testi
+                  </button>
+                  <button mat-raised-button
+                          color="primary"
+                          (click)="saveGroup(group)"
+                          [disabled]="savingGroup() === group.category || getGroupForm(group.category)?.invalid">
+                    @if (savingGroup() === group.category) {
+                      <mat-spinner diameter="20" class="button-spinner"></mat-spinner>
+                    } @else {
+                      <mat-icon>save</mat-icon>
+                    }
+                    Kaydet
+                  </button>
+                </div>
+              </form>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Info Card -->
+    <div class="list-card">
+      <mat-icon class="list-icon">info</mat-icon>
+      <div class="list-content">
+        <h3>Önemli Notlar</h3>
+        <ul>
+          <li><strong>SMTP Grupları:</strong> Her email kategorisi için ayrı SMTP ayarları tanımlayabilirsiniz (EMAIL_PERSONEL, EMAIL_REKTORLUK, vb.).</li>
+          <li><strong>Ortak SMTP Sunucu:</strong> SMTP_SERVER, SMTP_PORT ve ENABLE_SSL ayarları "Genel Sistem Ayarları" sayfasında EMAIL_ORTAK kategorisinde tanımlıdır ve tüm gruplar için ortaktır.</li>
+          <li><strong>FROM_EMAIL:</strong> Email gönderimlerinde görünecek gönderici adresi (örn: personel@deu.edu.tr).</li>
+          <li><strong>FROM_NAME:</strong> Email gönderimlerinde görünecek gönderici adı (örn: DEÜ Personel Duyuru Sistemi).</li>
+          <li><strong>SMTP_USERNAME:</strong> SMTP sunucusuna authentication için kullanıcı adı (opsiyonel). Boş bırakılırsa FROM_EMAIL kullanılır.</li>
+          <li><strong>SMTP_PASSWORD:</strong> SMTP sunucusuna authentication için şifre (opsiyonel). Gizli ayar olarak saklanır.</li>
+          <li><strong>Kategori Eşleşmesi:</strong> Yeni SMTP grubu ekledikten sonra "Email Kategorileri" sayfasından aynı isimde kategori oluşturmanız gerekir.</li>
+          <li><strong>Değişiklikler:</strong> Ayarları değiştirdikten sonra mutlaka "Kaydet" butonuna basın.</li>
+        </ul>
+      </div>
+    </div>
+  }
+</div>

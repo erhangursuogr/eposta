@@ -1,0 +1,110 @@
+/* Email Group List Styles */
+
+/* Filter Card - compact single-row layout */
+.filter-card {
+  margin-bottom: var(--space-lg);
+  border-radius: var(--radius-xl);
+  padding: var(--space-lg);
+}
+
+.filter-container {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search-field {
+  flex: 2;
+  min-width: 250px;
+}
+
+.filter-field {
+  flex: 1;
+  min-width: 180px;
+}
+
+.filter-container > button {
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .filter-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-field,
+  .filter-field {
+    width: 100%;
+    min-width: unset;
+  }
+
+  .filter-container > button {
+    width: 100%;
+  }
+}
+
+/* Groups Table */
+.groups-table {
+  width: 100%;
+}
+
+.groups-table th {
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  background-color: var(--bg-secondary);
+}
+
+.groups-table td,
+.groups-table th {
+  padding: var(--space-md);
+}
+
+@media (max-width: 1024px) {
+  .groups-table {
+    font-size: var(--font-size-sm);
+  }
+
+  .groups-table th,
+  .groups-table td {
+    padding: var(--space-sm);
+  }
+}
+
+@media (max-width: 768px) {
+  /* Hide last column (actions might wrap) on mobile */
+  .groups-table th:nth-child(6),
+  .groups-table td:nth-child(6) {
+    display: none;
+  }
+}
+
+.group-name strong {
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+}
+
+.group-desc {
+  margin: var(--space-xs) 0 0 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.member-count {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  color: var(--text-secondary);
+}
+
+.member-count mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+/* Status Chips - now using global .status-chip classes from components.css */
+
+/* Action Buttons, Loading & Empty State - using global components from common/ */

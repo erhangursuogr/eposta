@@ -1,0 +1,95 @@
+/* Container & Page Header - now using global classes from components.css */
+
+.filters-card {
+  margin-bottom: var(--space-lg);
+}
+
+.filters-container {
+  display: flex;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.filter-field {
+  flex: 1;
+  min-width: 200px;
+}
+
+.search-field {
+  min-width: 300px;
+}
+
+.results-info {
+  padding: var(--space-md);
+  background: var(--bg-primary);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-md);
+  text-align: center;
+}
+
+.loading-container, .empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-xxl);
+  text-align: center;
+}
+
+.empty-state mat-icon {
+  font-size: 64px;
+  width: 64px;
+  height: 64px;
+  margin-bottom: var(--space-md);
+}
+
+.table-container {
+  background: var(--bg-primary);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--space-md);
+}
+
+.announcements-table {
+  width: 100%;
+  background: var(--bg-primary);
+}
+
+.announcements-table th {
+  background: var(--bg-secondary);
+  font-weight: 600;
+  color: var(--text-primary);
+  padding: var(--space-md);
+}
+
+.announcements-table td {
+  padding: var(--space-md);
+  color: var(--text-primary);
+}
+
+.announcements-table tr:hover {
+  background: var(--bg-secondary);
+}
+
+.date-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.date-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: var(--primary-color);
+}
+
+@media (max-width: 768px) {
+  .table-container {
+    overflow-x: auto;
+  }
+
+  .announcements-table {
+    min-width: 900px;
+  }
+}

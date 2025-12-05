@@ -1,0 +1,142 @@
+<div class="page-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <mat-icon class="title-icon">{{ isEditMode() ? 'edit' : 'add' }}</mat-icon>
+        {{ isEditMode() ? 'Şablon Düzenle' : 'Yeni Şablon' }}
+      </h1>
+      <p class="page-description">Duyuru şablonları için yeniden kullanılabilir içerik oluşturun</p>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <mat-tab-group>
+    <!-- Form Tab -->
+    <mat-tab label="Şablon Formu">
+      <div class="tab-content">
+        <form [formGroup]="templateForm" (ngSubmit)="onSubmit()">
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>Temel Bilgiler</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="form-grid">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label style="font-weight: 500;">Şablon Adı</mat-label>
+                  <input matInput formControlName="ad" placeholder="Örn: Vefat Duyurusu Şablonu">
+                  <mat-icon matPrefix>label</mat-icon>
+                  <mat-hint>Şablonu tanımlamak için benzersiz bir ad verin</mat-hint>
+                </mat-form-field>
+
+                <div class="category-field-container">
+                  <mat-form-field appearance="outline" class="category-select">
+                    <mat-label style="font-weight: 500;">Kategori</mat-label>
+                    <mat-select formControlName="kategoriId" placeholder="Kategori seçin..." required>
+                      @for (category of categories(); track category.id) {
+                        <mat-option [value]="category.id">
+                          <mat-icon [style.color]="category.renk">{{ category.ikon }}</mat-icon>
+                          {{ category.kategoriAdi }}
+                        </mat-option>
+                      }
+                    </mat-select>
+                    <mat-icon matPrefix>folder</mat-icon>
+                    <mat-hint>Şablon için kategori seçimi zorunludur</mat-hint>
+                    @if (templateForm.get('kategoriId')?.hasError('required') && templateForm.get('kategoriId')?.touched) {
+                      <mat-error>Kategori seçimi zorunludur</mat-error>
+                    }
+                  </mat-form-field>
+                  <button mat-stroked-button type="button" (click)="openCategoryManagement()"
+                          matTooltip="Kategorileri yönet" class="manage-category-btn">
+                    <mat-icon class="title-icon">settings</mat-icon>
+                    Yönet
+                  </button>
+                </div>
+
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label style="font-weight: 500;">Konu Şablonu (Opsiyonel)</mat-label>
+                  <input matInput formControlName="konu" placeholder="Örn: [DEÜ] Duyuru Konusu">
+                  <mat-icon matPrefix>subject</mat-icon>
+                  <mat-hint>{{ variableHint }}</mat-hint>
+                </mat-form-field>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>İçerik Şablonu</mat-card-title>
+              <mat-card-subtitle>{{ contentVariableHint }}</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <div #suneditor></div>
+            </mat-card-content>
+          </mat-card>
+
+          <div class="form-actions">
+            <button mat-button type="button" (click)="cancel()" [disabled]="loading()">
+              <mat-icon class="title-icon">close</mat-icon>
+              İptal
+            </button>
+            <button mat-raised-button color="primary" type="submit"
+                    [disabled]="templateForm.invalid || loading()">
+              <mat-icon class="title-icon">{{ isEditMode() ? 'save' : 'add' }}</mat-icon>
+              {{ isEditMode() ? 'Güncelle' : 'Oluştur' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </mat-tab>
+
+    <!-- Preview Tab -->
+    <mat-tab label="Önizleme" [disabled]="!isEditMode()">
+      <div class="tab-content">
+        @if (!isEditMode()) {
+          <div class="empty-state">
+            <mat-icon class="title-icon">info</mat-icon>
+            <h3>Önizleme Kullanılamıyor</h3>
+            <p>Önizleme özelliği sadece kaydedilmiş şablonlar için kullanılabilir.</p>
+          </div>
+        } @else {
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>Şablon Önizlemesi</mat-card-title>
+              <mat-card-subtitle>Örnek verilerle render edilmiş görünüm</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              @if (!preview()) {
+                <div class="preview-placeholder">
+                  <p>Önizleme yüklemek için butona tıklayın</p>
+                  <button mat-raised-button color="accent" (click)="loadPreview()" [disabled]="loadingPreview()">
+                    <mat-icon class="title-icon">visibility</mat-icon>
+                    Önizleme Yükle
+                  </button>
+                </div>
+              } @else if (loadingPreview()) {
+                <div class="loading-container">
+                  <mat-spinner diameter="40"></mat-spinner>
+                  <p>Önizleme yükleniyor...</p>
+                </div>
+              } @else {
+                <div class="preview-container">
+                  <div class="preview-subject">
+                    <strong>Konu:</strong> {{ preview()!.renderedSubject || '(Konu belirtilmemiş)' }}
+                  </div>
+                  <div class="preview-content" [innerHTML]="getSafeHtml(preview()!.renderedContent)"></div>
+                </div>
+              }
+            </mat-card-content>
+            @if (preview()) {
+              <mat-card-actions>
+                <button mat-button (click)="loadPreview()" [disabled]="loadingPreview()">
+                  <mat-icon class="title-icon">refresh</mat-icon>
+                  Yenile
+                </button>
+              </mat-card-actions>
+            }
+          </mat-card>
+        }
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>

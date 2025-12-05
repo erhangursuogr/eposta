@@ -1,0 +1,178 @@
+<div class="page-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <mat-icon class="title-icon">category</mat-icon>
+        Duyuru Kategorileri ve İmzalar
+      </h1>
+      <p class="page-description">Duyuru kategorileri ve email imza yönetimi</p>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="createCategory()">
+        <mat-icon>add</mat-icon>
+        Yeni Kategori Ekle
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Dashboard -->
+  <div class="categories-stats">
+    <div class="stat-card primary-card">
+      <div class="stat-icon-wrapper primary-icon">
+        <mat-icon>category</mat-icon>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Toplam Kategori</div>
+        <div class="stat-value">{{ totalCategories() }}</div>
+      </div>
+    </div>
+
+    <div class="stat-card success-card">
+      <div class="stat-icon-wrapper success-icon">
+        <mat-icon>check_circle</mat-icon>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Aktif Kategoriler</div>
+        <div class="stat-value">{{ activeCategories() }}</div>
+      </div>
+    </div>
+
+    <div class="stat-card info-card">
+      <div class="stat-icon-wrapper info-icon">
+        <mat-icon>draw</mat-icon>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">İmzalı Kategoriler</div>
+        <div class="stat-value">{{ categoriesWithSignature() }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  @if (loading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="50"></mat-spinner>
+      <p>Kategoriler yükleniyor...</p>
+    </div>
+  }
+
+  <!-- Empty State -->
+  @if (!loading() && categories().length === 0) {
+    <div class="empty-state">
+      <mat-icon class="empty-icon">category</mat-icon>
+      <h2>Kategori Bulunamadı</h2>
+      <p>Henüz hiç email kategorisi oluşturulmamış.</p>
+      <button mat-raised-button color="primary" (click)="createCategory()">
+        <mat-icon>add</mat-icon>
+        İlk Kategoriyi Oluştur
+      </button>
+    </div>
+  }
+
+  <!-- Categories Table -->
+  @if (!loading() && categories().length > 0) {
+    <div class="table-container">
+      <table mat-table [dataSource]="categories()" class="modern-table">
+        <ng-container matColumnDef="key">
+          <th mat-header-cell *matHeaderCellDef>
+            <div class="header-cell">
+              <mat-icon>label</mat-icon>
+              Kategori
+            </div>
+          </th>
+          <td mat-cell *matCellDef="let cat">
+            <div class="key-cell">
+              <mat-icon class="cell-icon">bookmark</mat-icon>
+              <strong>{{ cat.key }}</strong>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="description">
+          <th mat-header-cell *matHeaderCellDef>
+            <div class="header-cell">
+              <mat-icon>description</mat-icon>
+              Açıklama
+            </div>
+          </th>
+          <td mat-cell *matCellDef="let cat">
+            <span class="description-text">{{ cat.description }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="hasSignature">
+          <th mat-header-cell *matHeaderCellDef>
+            <div class="header-cell">
+              <mat-icon>draw</mat-icon>
+              İmza
+            </div>
+          </th>
+          <td mat-cell *matCellDef="let cat">
+            @if (cat.hasSignature) {
+              <span class="signature-badge has-signature">
+                <mat-icon class="badge-icon">check_circle</mat-icon>
+                Var
+              </span>
+            } @else {
+              <span class="signature-badge no-signature">Yok</span>
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="isActive">
+          <th mat-header-cell *matHeaderCellDef>
+            <div class="header-cell">
+              <mat-icon>toggle_on</mat-icon>
+              Durum
+            </div>
+          </th>
+          <td mat-cell *matCellDef="let cat">
+            @if (cat.isActive) {
+              <span class="status-badge active">
+                <mat-icon class="badge-icon">verified</mat-icon>
+                Aktif
+              </span>
+            } @else {
+              <span class="status-badge inactive">
+                <mat-icon class="badge-icon">cancel</mat-icon>
+                Pasif
+              </span>
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>İşlemler</th>
+          <td mat-cell *matCellDef="let cat">
+            <div class="action-buttons">
+              <button mat-icon-button matTooltip="Düzenle" (click)="editCategory(cat)" class="edit-button">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button matTooltip="Sil" (click)="deleteCategory(cat)" class="delete-button">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="table-row"></tr>
+      </table>
+    </div>
+
+    <!-- Info list Card -->
+    <div class="list-card">
+      <mat-icon class="list-icon">info</mat-icon>
+      <div class="list-content">
+        <h3>Önemli Notlar</h3>
+        <ul>
+          <li><strong>Kategori Anahtarı:</strong> PERSONEL, REKTORLUK, HASTANE gibi büyük harfle yazılmalıdır.</li>
+          <li><strong>İmza:</strong> HTML formatında email imzası ekleyebilirsiniz. Boş bırakılırsa imzasız gönderilir.</li>
+          <li><strong>SMTP Ayarları:</strong> Yeni kategori ekledikten sonra "Duyuru SMTP Ayarları" sayfasından ilgili SMTP grubunu da eklemelisiniz.</li>
+          <li><strong>Duyuru Dropdown:</strong> Aktif kategoriler duyuru oluşturma sayfasında dropdown'da görünür.</li>
+        </ul>
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,71 @@
+<div class="page-container">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Şablon Kategorileri</h1>
+      <p class="text-muted">Şablon kategorilerini yönetin</p>
+    </div>
+    <button mat-raised-button color="primary" (click)="navigateToForm()">
+      <mat-icon>add</mat-icon>
+      Yeni Kategori
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-container">
+      <mat-spinner></mat-spinner>
+    </div>
+  } @else {
+    @if (sortedCategories().length === 0) {
+      <mat-card class="empty-state">
+        <mat-icon>label_off</mat-icon>
+        <h3>Kategori Bulunamadı</h3>
+        <p>Henüz hiç kategori oluşturulmamış. Yeni kategori eklemek için yukarıdaki butona tıklayın.</p>
+      </mat-card>
+    } @else {
+      <div class="category-grid">
+        @for (category of sortedCategories(); track category.id) {
+          <mat-card class="category-card" [class.inactive]="category.aktif === 'N'">
+            <mat-card-header>
+              <div class="category-icon-container" [style.background-color]="category.renk">
+                <mat-icon>{{ category.ikon }}</mat-icon>
+              </div>
+              <mat-card-title>{{ category.kategoriAdi }}</mat-card-title>
+              <button mat-icon-button [matMenuTriggerFor]="menu" class="menu-button">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              <mat-menu #menu="matMenu">
+                <button mat-menu-item (click)="navigateToForm(category.id)">
+                  <mat-icon>edit</mat-icon>
+                  <span>Düzenle</span>
+                </button>
+                <button mat-menu-item (click)="toggleStatus(category)">
+                  <mat-icon>{{ category.aktif === 'Y' ? 'toggle_off' : 'toggle_on' }}</mat-icon>
+                  <span>{{ category.aktif === 'Y' ? 'Pasifleştir' : 'Aktifleştir' }}</span>
+                </button>
+                <button mat-menu-item (click)="deleteCategory(category)" class="delete-button">
+                  <mat-icon>delete</mat-icon>
+                  <span>Sil</span>
+                </button>
+              </mat-menu>
+            </mat-card-header>
+            <mat-card-content>
+              @if (category.aciklama) {
+                <p class="category-description">{{ category.aciklama }}</p>
+              }
+              <div class="category-meta">
+                <mat-chip-set>
+                  <mat-chip [style.background-color]="category.renk" [style.color]="'white'">
+                    Sıra: {{ category.siraNo }}
+                  </mat-chip>
+                  <mat-chip [class.chip-active]="category.aktif === 'Y'" [class.chip-inactive]="category.aktif === 'N'">
+                    {{ category.aktif === 'Y' ? 'Aktif' : 'Pasif' }}
+                  </mat-chip>
+                </mat-chip-set>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        }
+      </div>
+    }
+  }
+</div>

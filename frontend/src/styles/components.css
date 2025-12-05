@@ -1,0 +1,574 @@
+/* ================================
+   Component Base Styles
+   ================================ */
+
+/* ===== Cards ===== */
+.card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-base);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.card-header {
+  padding: var(--space-lg);
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+}
+
+.card-body {
+  padding: var(--space-lg);
+}
+
+.card-footer {
+  padding: var(--space-lg);
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+}
+
+/* ===== Buttons ===== */
+.btn {
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  border: none;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--primary-hover);
+}
+
+.btn-secondary {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-hover);
+}
+
+/* ===== Forms ===== */
+.form-group {
+  margin-bottom: var(--space-lg);
+}
+
+.form-label {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  margin-bottom: var(--space-sm);
+}
+
+.form-input {
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+  transition: all var(--transition-base);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+/* ===== Tables ===== */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bg-primary);
+}
+
+.table thead {
+  background: var(--bg-secondary);
+  border-bottom: 2px solid var(--border-color);
+}
+
+.table th {
+  padding: var(--space-md);
+  text-align: left;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.table td {
+  padding: var(--space-md);
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+.table tbody tr:hover {
+  background: var(--bg-hover);
+}
+
+/* ===== Badges ===== */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.badge-primary {
+  background: var(--primary-100);
+  color: var(--primary-700);
+}
+
+.badge-success {
+  background: var(--success-50);
+  color: var(--success-700);
+}
+
+.badge-warning {
+  background: var(--warning-50);
+  color: var(--warning-700);
+}
+
+.badge-danger {
+  background: var(--danger-50);
+  color: var(--danger-700);
+}
+
+/* ===== Alerts ===== */
+.alert {
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  border-left: 4px solid;
+  margin-bottom: var(--space-lg);
+}
+
+.alert-success {
+  background: var(--success-50);
+  border-color: var(--success-500);
+  color: var(--success-700);
+}
+
+.alert-warning {
+  background: var(--warning-50);
+  border-color: var(--warning-500);
+  color: var(--warning-700);
+}
+
+.alert-danger {
+  background: var(--danger-50);
+  border-color: var(--danger-500);
+  color: var(--danger-700);
+}
+
+.alert-info {
+  background: var(--info-50);
+  border-color: var(--info-500);
+  color: var(--info-700);
+}
+
+/* ===== Modal ===== */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: var(--z-modal-backdrop);
+}
+
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  z-index: var(--z-modal);
+  max-width: 600px;
+  width: 90%;
+}
+
+.modal-header {
+  padding: var(--space-xl);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal-body {
+  padding: var(--space-xl);
+}
+
+.modal-footer {
+  padding: var(--space-xl);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-md);
+}
+
+/* ================================
+   Global Page Patterns
+   ================================ */
+
+/* ===== Page Container ===== */
+.page-container {
+  padding: var(--container-padding);
+  max-width: var(--container-max-width);
+  min-width: var(--container-min-width);
+  margin: 0 auto;
+  background: #f0f2f5;
+  min-height: var(--container-min-height);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+@media (max-width: 768px) {
+  .page-container {
+    padding: var(--space-lg);
+  }
+}
+
+/* ===== Page Header ===== */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-2xl);
+  gap: var(--space-xl);
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
+  }
+}
+
+.page-header h1,
+.page-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin: 0;
+  font-size: var(--page-title-size);
+  font-weight: var(--page-title-weight);
+  color: var(--page-title-color);
+}
+
+@media (max-width: 768px) {
+  .page-header h1,
+  .page-title {
+    font-size: 20px;
+  }
+}
+
+.page-header mat-icon,
+.title-icon {
+  font-size: var(--page-icon-size);
+  width: var(--page-icon-size);
+  height: var(--page-icon-size);
+  color: var(--page-title-color);
+}
+
+.page-description {
+  margin: var(--space-sm) 0 0 0;
+  color: var(--gray-600);
+  font-size: var(--font-size-base);
+}
+
+/* ===== Empty State ===== */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4xl) var(--space-xl);
+  color: var(--empty-state-text-color);
+  text-align: center;
+}
+
+.empty-state mat-icon {
+  font-size: var(--empty-state-icon-size);
+  width: var(--empty-state-icon-size);
+  height: var(--empty-state-icon-size);
+  margin-bottom: var(--space-lg);
+  color: var(--empty-state-icon-color);
+  opacity: 0.3;
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: var(--font-size-md);
+}
+
+/* ===== Loading Container ===== */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4xl) var(--space-xl);
+  background: var(--bg-primary);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+}
+
+.loading-container p {
+  margin-top: var(--space-lg);
+  color: var(--gray-600);
+  font-size: var(--font-size-base);
+}
+
+/* Loading Overlay */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--loading-overlay-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-modal);
+  color: white;
+}
+
+.loading-overlay p {
+  margin-top: var(--space-lg);
+}
+
+/* ===== Status Chips ===== */
+.status-chip {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: var(--space-sm) !important;
+  padding: 4px 8px !important;
+  border-radius: 16px !important;
+  font-size: 12px !important;
+  font-weight: var(--font-weight-medium) !important;
+  border: none !important;
+}
+
+.chip-icon {
+  font-size: 16px !important;
+  width: 16px !important;
+  height: 16px !important;
+}
+
+/* Base status colors */
+.status-gray {
+  background-color: var(--status-gray-bg) !important;
+  color: var(--status-gray-text) !important;
+}
+
+.status-orange {
+  background-color: var(--status-orange-bg) !important;
+  color: var(--status-orange-text) !important;
+}
+
+.status-blue {
+  background-color: var(--status-blue-bg) !important;
+  color: var(--status-blue-text) !important;
+}
+
+.status-green {
+  background-color: var(--status-green-bg) !important;
+  color: var(--status-green-text) !important;
+}
+
+.status-red {
+  background-color: var(--status-red-bg) !important;
+  color: var(--status-red-text) !important;
+}
+
+.status-dark-gray {
+  background-color: var(--status-dark-gray-bg) !important;
+  color: var(--status-dark-gray-text) !important;
+}
+
+/* Semantic status variants */
+.status-active {
+  background-color: var(--success-50) !important;
+  color: var(--success-700) !important;
+}
+
+.status-inactive {
+  background-color: var(--danger-50) !important;
+  color: var(--danger-700) !important;
+}
+
+.status-warning {
+  background-color: var(--warning-50) !important;
+  color: var(--warning-700) !important;
+}
+
+.status-info {
+  background-color: var(--info-50) !important;
+  color: var(--info-700) !important;
+}
+
+.status-primary {
+  background-color: var(--primary-100) !important;
+  color: var(--primary-700) !important;
+}
+
+/* ===== Action Buttons ===== */
+.action-buttons {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+  justify-content: flex-start;
+  padding: 4px 0;
+}
+
+.action-btn {
+  width: var(--btn-action-size) !important;
+  height: var(--btn-action-size) !important;
+  transition: all var(--transition-base);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+.action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+.action-btn mat-icon {
+  font-size: var(--btn-action-icon-size);
+  width: var(--btn-action-icon-size);
+  height: var(--btn-action-icon-size);
+  line-height: var(--btn-action-icon-size);
+}
+
+.action-btn-edit {
+  background-color: var(--btn-edit-bg) !important;
+  color: white !important;
+}
+
+.action-btn-edit:hover {
+  background-color: var(--btn-edit-hover) !important;
+}
+
+.action-btn-approve {
+  background-color: var(--btn-approve-bg) !important;
+  color: white !important;
+}
+
+.action-btn-approve:hover {
+  background-color: var(--btn-approve-hover) !important;
+}
+
+.action-btn-duplicate {
+  background-color: var(--btn-duplicate-bg) !important;
+  color: white !important;
+}
+
+.action-btn-duplicate:hover {
+  background-color: var(--btn-duplicate-hover) !important;
+}
+
+.action-btn-history {
+  background-color: var(--btn-history-bg) !important;
+  color: white !important;
+}
+
+.action-btn-history:hover {
+  background-color: var(--btn-history-hover) !important;
+}
+
+.action-btn-delete {
+  background-color: var(--btn-delete-bg) !important;
+  color: white !important;
+}
+
+.action-btn-delete:hover {
+  background-color: var(--btn-delete-hover) !important;
+}
+
+/* ===== Material Icon Colors ===== */
+/* Delete icon styling - applies to all delete icons globally */
+/* Exclude action-btn-delete which has its own white styling */
+.delete-button mat-icon,
+button[mattooltip="Sil"]:not(.action-btn-delete) mat-icon,
+button[mattooltip="Grubu Sil"]:not(.action-btn-delete) mat-icon {
+  color: #d32f2f !important;
+  transition: color 0.2s ease;
+}
+
+.delete-button:hover mat-icon,
+button[mattooltip="Sil"]:not(.action-btn-delete):hover mat-icon,
+button[mattooltip="Grubu Sil"]:not(.action-btn-delete):hover mat-icon {
+  color: #c62828 !important;
+}
+
+/* Mobile responsive action buttons */
+@media (max-width: 768px) {
+  .action-buttons {
+    gap: 6px;
+  }
+
+  .action-btn {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .action-btn mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* ===== Filter Card Pattern ===== */
+.filters-card {
+  margin-bottom: var(--space-xl);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.filters-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-md);
+}
+
+.filter-field {
+  width: 100%;
+}
+
+.filter-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: flex-end;
+  margin-top: var(--space-sm);
+}
+
+@media (max-width: 768px) {
+  .filters-container {
+    grid-template-columns: 1fr;
+  }
+}

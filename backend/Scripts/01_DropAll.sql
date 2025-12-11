@@ -45,9 +45,6 @@ DROP VIEW V_DUYURULAR_LISTE;
 -- =============================================
 PROMPT 3. Triggers siliniyor...
 
--- Sistem ayarları audit trigger (YENİ)
-DROP TRIGGER TRG_SISTEM_AYARLARI_AUDIT;
-
 -- Duyuru audit trigger
 DROP TRIGGER TRG_DUYURULARI_AUDIT;
 

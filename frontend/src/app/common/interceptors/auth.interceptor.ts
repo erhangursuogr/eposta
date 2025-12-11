@@ -42,8 +42,11 @@ export class AuthInterceptor implements HttpInterceptor {
       catchError((error: HttpErrorResponse) => {
         // 401 Unauthorized - Oturum süresi dolmuş veya geçersiz token
         if (error.status === 401) {
-          // Login sayfasında değilsek kullanıcıyı bilgilendir ve login'e yönlendir
-          if (!this._router.url.includes('/login')) {
+          // Login ve callback sayfalarında 401'i ignore et
+          const currentUrl = this._router.url;
+          const isLoginOrCallback = currentUrl.includes('/login') || currentUrl.includes('/auth/callback');
+
+          if (!isLoginOrCallback) {
             this._userDataService.clearUserData();
 
             // Manuel logout sonrası mesaj gösterme (localStorage flag kontrolü)

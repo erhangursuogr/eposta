@@ -46,6 +46,9 @@ public static class ServiceCollectionExtensions
         // HttpContextAccessor (required for AuditLogService to access HttpContext)
         services.AddHttpContextAccessor();
 
+        // HttpClient (SSO Keycloak için gerekli)
+        services.AddHttpClient();
+
         // AutoMapper
         services.AddAutoMapper(typeof(MappingProfile));
 
@@ -77,19 +80,15 @@ public static class ServiceCollectionExtensions
         // Hangfire Jobs
         services.AddScoped<OrphanFileCleanupJob>();
 
-        // Data Protection - Persistent & Encrypted keys
+        // Data Protection - Persistent keys (DPAPI disabled for production compatibility)
+        // DPAPI removed: IIS app pool identity permissions sorunlarını önler
+        // SECURITY: keys klasörü permission'ını sıkılaştırın (sadece app pool identity okusun)
         var keysPath = Path.Combine(Directory.GetCurrentDirectory(), "keys");
         Directory.CreateDirectory(keysPath); // Ensure directory exists
 
-        var dataProtectionBuilder = services.AddDataProtection()
+        services.AddDataProtection()
             .PersistKeysToFileSystem(new DirectoryInfo(keysPath))
             .SetApplicationName("DeuEpostaYonetim");
-
-        // Windows DPAPI encryption (only on Windows)
-        if (OperatingSystem.IsWindows())
-        {
-            dataProtectionBuilder.ProtectKeysWithDpapi();
-        }
 
         return services;
     }

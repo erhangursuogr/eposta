@@ -266,8 +266,8 @@ public class DeuEpostaContext : DbContext
         entity.Property(e => e.Icerik).IsRequired().HasColumnType("CLOB").HasColumnName("ICERIK");
         entity.Property(e => e.Aciklama).HasMaxLength(1000).IsUnicode(false).HasColumnName("ACIKLAMA");
         entity.Property(e => e.IcerikTipi).HasMaxLength(30).HasDefaultValue("EMAIL").IsUnicode(false).HasColumnName("ICERIK_TIPI");
-        entity.Property(e => e.DuyuruKategorisi).HasMaxLength(50).HasDefaultValue("PERSONEL").IsUnicode(false).HasColumnName("DUYURU_KATEGORISI");
-        entity.Property(e => e.GondericiKategori).HasMaxLength(50).HasDefaultValue("EMAIL_PERSONEL").IsUnicode(false).HasColumnName("GONDERICI_KATEGORI");
+        entity.Property(e => e.DuyuruKategorisi).HasMaxLength(50).HasDefaultValue("GENEL_DUYURU_IMZASIZ").IsUnicode(false).HasColumnName("DUYURU_KATEGORISI");
+        entity.Property(e => e.GondericiKategori).HasMaxLength(50).HasDefaultValue("EMAIL_DUYURU").IsUnicode(false).HasColumnName("GONDERICI_KATEGORI");
         entity.Property(e => e.BannerDosyaId).HasColumnName("BANNER_DOSYA_ID");
         entity.Property(e => e.SablonId).HasColumnName("SABLON_ID");
         entity.Property(e => e.OlusturanKullaniciId).HasColumnName("OLUSTURAN_KULLANICI_ID");

@@ -150,7 +150,7 @@ export class AnnouncementWorkflowService {
             }
 
             this.toastr.success(
-              isEditMode ? 'Duyuru güncellendi' : 'Duyuru oluşturuldu'
+              isEditMode ? 'Duyuru güncellendi' : 'Duyuru taslak olarak kaydedildi'
             );
 
             if (submitForApproval) {
@@ -184,9 +184,9 @@ export class AnnouncementWorkflowService {
                     );
                   }
                 });
-            } else if (!isEditMode) {
-              // Yeni duyuru oluşturulduysa listeye dön
-              this.router.navigate(['/duyurular']);
+            } else if (!isEditMode && duyuruId) {
+              // Yeni duyuru taslak olarak kaydedildi - edit moduna geç (sayfada kal)
+              this.router.navigate(['/duyuru-duzenle', duyuruId,], { replaceUrl: true });
             }
             // Edit modda güncelleme sonrası aynı sayfada kal
           }
@@ -454,14 +454,17 @@ export class AnnouncementWorkflowService {
 
     this.loading.set(true);
 
-    const request = {
-      ...formData,
-      icerik: editorContent,
-      testEmail: testEmail
-    };
+    this.loading.set(true);
 
-    this.http
-      .post<any>(`${environment.apiUrl}/api/announcements/send-test`, request)
+    // KURAL: Test email sadece kayıtlı duyurular için atılabilir via {id}/send-test endpoint
+    if (!announcementId) {
+      this.toastr.warning('Test emaili göndermek için önce taslağı kaydetmelisiniz.');
+      this.loading.set(false);
+      return;
+    }
+
+    this.announcementService
+      .sendTestEmail(announcementId, testEmail)
       .pipe(
         finalize(() => this.loading.set(false)),
         takeUntilDestroyed(this.destroyRef)

@@ -13,8 +13,8 @@ public class EpostaDuyuru
     public int? SablonId { get; set; }
     public int OlusturanKullaniciId { get; set; }
     public string Durum { get; set; } = DuyuruDurum.TASLAK;
-    public string DuyuruKategorisi { get; set; } = "PERSONEL"; // Email imza kategorisi (EMAIL_IMZA tablosundan - PERSONEL, REKTORLUK, vb.)
-    public string GondericiKategori { get; set; } = "EMAIL_PERSONEL"; // SMTP gönderici kategorisi (EMAIL_PERSONEL, EMAIL_REKTORLUK, vb.)
+    public string DuyuruKategorisi { get; set; } = "GENEL_DUYURU_IMZASIZ"; // Email imza kategorisi (EMAIL_IMZA tablosundan - GENEL_DUYURU_IMZASIZ, REKTOR, BID, vb.)
+    public string GondericiKategori { get; set; } = "EMAIL_DUYURU"; // SMTP gönderici kategorisi (EMAIL_REKTOR, EMAIL_BID, EMAIL_DUYURU, vb.)
     public int? IlkOnaylayanKullaniciId { get; set; } // Koordinatör (ilk onaylayan)
     public int? SonOnaylayanKullaniciId { get; set; } // Manager (son onaylayan)
     public DateTime? GercekGonderimTarihi { get; set; } // Gerçek gönderim tarihi (sadece EMAIL için)

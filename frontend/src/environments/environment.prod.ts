@@ -38,6 +38,11 @@ export const environment = {
   hangfireUrl: 'http://localhost:5118/hangfire',//'https://kurumsalduyuru.deu.edu.tr/hangfire',
   seqUrl: 'http://localhost:5341/',//'https://seq.deu.edu.tr', // Production Seq URL (sunucu kurulunca güncelle)
 
+  // SSO Keycloak (AUTH_MODE=1 ise kullanılır)
+  keycloakAuthUrl: 'https://sso.deu.edu.tr:8443/realms/dokuzeylul/protocol/openid-connect/auth?client_id=kurumsal-duyuru-client&redirect_uri=https://kurumsalduyuru.deu.edu.tr/auth/callback&response_type=code&scope=openid email profile' as string,
+
+  keycloakLogoutUrl: 'https://sso.deu.edu.tr:8443/realms/dokuzeylul/protocol/openid-connect/logout?post_logout_redirect_uri=https://kurumsalduyuru.deu.edu.tr/login' as string,
+
   // Application info
   appName: 'DEÜ Duyuru Yönetim Sistemi',
   appVersion: '1.0.0',

@@ -4,12 +4,14 @@ import { UserDataModel } from '../common/models/user-data.model';
 import { ToastrService } from 'ngx-toastr';
 import { AuthService } from './auth.service';
 import { AnnouncementService } from './announcement.service';
+import { SessionTimeoutService } from './session-timeout.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class UserDataService {
   private _authService = inject(AuthService);
+  private _sessionTimeout = inject(SessionTimeoutService);
   private _injector = inject(Injector);
   private _router = inject(Router);
   private _toastr = inject(ToastrService);
@@ -39,6 +41,7 @@ setUser(onComplete?: () => void) {
             name: firstName,
             surname: lastName,
             token: 'COOKIE_BASED', // Placeholder - token artık cookie'de
+            gorevYeri: userInfo.gorevYeri || 0
           });
 
           // Callback çağır (user set edildikten sonra)
@@ -72,30 +75,57 @@ setUser(onComplete?: () => void) {
   }
 
 
-  logout() {
-    // SECURITY: Backend'e logout isteği gönder (cookie silinecek)
-    this._authService.logout().subscribe({
-      next: (response) => {
-        if (response.success) {
-          localStorage.clear();
-          this._toastr.success('Çıkış yapıldı');
-          this.user.set({} as UserDataModel);
-          // Manuel logout flag set et (localStorage temizlendikten SONRA, navigate'den ÖNCE)
-          localStorage.setItem('manual_logout', 'true');
-          this._router.navigate(['/login']);
+  async logout() {
+    // Dual-mode logout (AUTH_MODE'a göre)
+    try {
+      const mode = await this._authService.getAuthMode();
+
+      // SSO mode: id_token'ı localStorage.clear() öncesi al
+      const idToken = mode === '1' ? localStorage.getItem('id_token') : null;
+
+      // Backend logout
+      this._authService.logout().subscribe({
+        next: (response) => {
+          if (response.success) {
+            this._toastr.success('Çıkış yapıldı');
+          }
+        },
+        error: (err) => {
+          console.warn('Backend logout failed:', err);
         }
-      },
-      error: (err) => {
-        console.error('Logout failed:', err);
-        // Hata olsa bile client-side temizle
-        localStorage.clear();
-        this.user.set({} as UserDataModel);
-        // Manuel logout flag set et (localStorage temizlendikten SONRA, navigate'den ÖNCE)
-        localStorage.setItem('manual_logout', 'true');
+      });
+
+      // Clear state
+      localStorage.clear();
+      this.user.set({} as UserDataModel);
+      localStorage.setItem('manual_logout', 'true');
+
+      // Session timeout monitoring'i durdur
+      this._sessionTimeout.clearSessionExpiration();
+
+      // Redirect based on mode
+      if (mode === '1') {
+        // SSO mode: Keycloak logout with id_token_hint
+        const keycloakLogoutUrl = await import('../../environments/environment').then(m => m.environment.keycloakLogoutUrl);
+
+        if (idToken) {
+          const logoutUrlWithToken = `${keycloakLogoutUrl}&id_token_hint=${encodeURIComponent(idToken)}`;
+          window.location.href = logoutUrlWithToken;
+        } else {
+          window.location.href = keycloakLogoutUrl;
+        }
+      } else {
+        // LDAP mode: Login page
         this._router.navigate(['/login']);
-        this._toastr.warning('Çıkış yapıldı (kısmi hata)');
       }
-    });
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Fallback: LDAP logout
+      localStorage.clear();
+      this.user.set({} as UserDataModel);
+      localStorage.setItem('manual_logout', 'true');
+      this._router.navigate(['/login']);
+    }
   }
 
   /**
@@ -109,6 +139,9 @@ setUser(onComplete?: () => void) {
       localStorage.setItem('manual_logout', manualLogoutFlag);
     }
     this.user.set({} as UserDataModel);
+
+    // Session timeout monitoring'i durdur
+    this._sessionTimeout.clearSessionExpiration();
   }
 
   redirectUrl() {

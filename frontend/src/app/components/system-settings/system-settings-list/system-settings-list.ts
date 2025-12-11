@@ -63,7 +63,7 @@ export class SystemSettingsList implements OnInit {
     const settings = this.allSettings();
     const categoriesMap = new Map<string, SystemSetting[]>();
 
-    // EMAIL_* kategorilerini filtrele (EMAIL_KATEGORI, EMAIL_IMZA, EMAIL_PERSONEL vb. hariç)
+    // EMAIL_* kategorilerini filtrele (EMAIL_KATEGORI, EMAIL_IMZA, EMAIL_DUYURU vb. hariç)
     // EMAIL_ORTAK = Ortak SMTP sunucu ayarları (tüm gruplar için) - burada kalır
     settings.forEach(setting => {
       // EMAIL ile başlayanları gösterme ANCAK EMAIL_ORTAK hariç (ortak SMTP sunucu ayarları)
@@ -285,6 +285,19 @@ export class SystemSettingsList implements OnInit {
     return setting.key.includes('IMZA') ||
            setting.key.includes('TEMPLATE') ||
            setting.value.length > 100;
+  }
+
+  isAuthMode(setting: SystemSetting): boolean {
+    return setting.category === 'AUTH' && setting.key === 'MODE';
+  }
+
+  onAuthModeToggle(event: any, settingKey: string, form: FormGroup): void {
+    const newValue = event.checked ? '1' : '0';
+    const control = form.get(settingKey);
+    if (control) {
+      control.setValue(newValue);
+      control.markAsDirty();
+    }
   }
 
   // CRUD operations

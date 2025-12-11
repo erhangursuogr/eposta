@@ -11,6 +11,7 @@ import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
 import { UserDataService } from '../../services/userdata.service';
 import { ErrorService } from '../../common/services/error.service';
+import { SessionTimeoutService } from '../../services/session-timeout.service';
 
 @Component({
   selector: 'app-login',
@@ -28,6 +29,7 @@ import { ErrorService } from '../../common/services/error.service';
 })
 export class LoginComponent {
   private _authService = inject(AuthService);
+  private _sessionTimeout = inject(SessionTimeoutService);
   private _userDataService = inject(UserDataService);
   private _errorService = inject(ErrorService);
   private _router = inject(Router);
@@ -49,19 +51,6 @@ export class LoginComponent {
   clickEvent(event: MouseEvent) {
     this.hide.set(!this.hide());
     event.stopPropagation();
-  }
-
-  successSound = new Audio('assets/success.mp3');
-  failSound = new Audio('assets/fail.mp3');
-
-  playSuccessSound() {
-    this.successSound.currentTime = 0; // başa sar
-    this.successSound.play().catch(err => console.warn(err));
-  }
-
-  playFailSound() {
-    this.failSound.currentTime = 0;
-    this.failSound.play().catch(err => console.warn(err));
   }
 
   ngOnInit() {
@@ -106,9 +95,14 @@ export class LoginComponent {
             if (response.success) {
               // SECURITY: Token artık HttpOnly cookie'de (backend tarafından set edildi)
               // localStorage'a yazılmıyor (XSS koruması)
-             this.playSuccessSound();
 
               this._errorService.showSuccess('Giriş başarılı.', 'Başarılı');
+
+              // Session timeout monitoring başlat
+              if (response.data?.expiresAt) {
+                this._sessionTimeout.setSessionExpiration(new Date(response.data.expiresAt));
+                this._sessionTimeout.startMonitoring();
+              }
 
               // User bilgisini backend'den çek ve SONRA navigate et
               this._userDataService.setUser(() => {
@@ -124,8 +118,6 @@ export class LoginComponent {
             }
           },
           error: (err) => {
-
-            this.playFailSound();
             // Backend'den gelen hata mesajını al (camelCase artık backend'den geliyor)
             const errorMsg = err.error?.message || err.error?.Message || 'Giriş başarısız. Lütfen bilgilerinizi kontrol edin.';
 

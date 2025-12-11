@@ -29,8 +29,13 @@
             "allowedCommonJsDependencies": [
               "moment",
               "sweetalert2",
-              "crypto-js",
-              "suneditor"
+              "suneditor",
+              "jspdf-autotable",
+              "exceljs",
+              "html2canvas",
+              "canvg",
+              "raf",
+              "rgbcolor"
             ],
             "assets": [
               {
@@ -62,8 +67,8 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "10kB",
-                  "maximumError": "20kB"
+                  "maximumWarning": "20kB",
+                  "maximumError": "30kB"
                 }
               ],
               "outputHashing": "all",

@@ -258,8 +258,8 @@ public class EmailService : IEmailService
 
     public async Task<EmailConfig> GetEmailConfigAsync()
     {
-        // Varsayılan PERSONEL kategorisi için EmailConfig alınır
-        return await _emailCategoryService.GetEmailConfigByCategoryAsync("PERSONEL");
+        // Varsayılan SISTEM kategorisi için EmailConfig alınır
+        return await _emailCategoryService.GetEmailConfigByCategoryAsync("EMAIL_DUYURU");
     }
 
     public Task<bool> ValidateEmailSecurityAsync(string content, List<string> recipients)

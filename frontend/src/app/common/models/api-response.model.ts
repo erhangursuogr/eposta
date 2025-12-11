@@ -18,7 +18,9 @@ export interface LoginRequest {
 
 export interface LoginData {
   token: string;
+  idToken?: string; // SSO Keycloak id_token (logout için)
   user: UserInfo;
+  expiresAt: string; // ISO 8601 format - Session timeout warning için
 }
 
 export interface UserInfo {

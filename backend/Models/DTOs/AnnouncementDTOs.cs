@@ -32,19 +32,19 @@ public class CreateAnnouncementRequest
     public int? BannerDosyaId { get; set; }
 
     /// <summary>
-    /// Duyuru imza kategorisi (PERSONEL, REKTORLUK, MUHENDISLIK, vb.) - EMAIL_IMZA tablosundan
+    /// Duyuru imza kategorisi (GENEL_DUYURU_IMZASIZ, REKTOR, BID, vb.) - EMAIL_IMZA tablosundan
     /// </summary>
     [Required(ErrorMessage = "Duyuru kategorisi zorunludur")]
     [StringLength(50, ErrorMessage = "Duyuru kategorisi en fazla 50 karakter olmalıdır")]
     public string DuyuruKategorisi { get; set; } = string.Empty;
 
     /// <summary>
-    /// SMTP gönderici kategorisi (EMAIL_PERSONEL, EMAIL_REKTORLUK, vb.)
+    /// SMTP gönderici kategorisi (EMAIL_REKTOR, EMAIL_BID, EMAIL_DUYURU, vb.)
     /// Hangi email hesabından gönderileceğini belirler
     /// </summary>
     [Required(ErrorMessage = "Gönderici kategorisi zorunludur")]
     [StringLength(50, ErrorMessage = "Gönderici kategorisi en fazla 50 karakter olmalıdır")]
-    public string GondericiKategori { get; set; } = "EMAIL_PERSONEL";
+    public string GondericiKategori { get; set; } = "EMAIL_DUYURU";
 
     /// <summary>
     /// Duyuruyu onaylayacak kullanıcının ID'si (opsiyonel - MANAGER veya ADMIN rolünde olmalı)
@@ -108,19 +108,19 @@ public class UpdateAnnouncementRequest
     public int? BannerDosyaId { get; set; }
 
     /// <summary>
-    /// Duyuru imza kategorisi (PERSONEL, REKTORLUK, MUHENDISLIK, vb.) - EMAIL_IMZA tablosundan
+    /// Duyuru imza kategorisi (GENEL_DUYURU_IMZASIZ, REKTOR, BID, vb.) - EMAIL_IMZA tablosundan
     /// </summary>
     [Required(ErrorMessage = "Duyuru kategorisi zorunludur")]
     [StringLength(50, ErrorMessage = "Duyuru kategorisi en fazla 50 karakter olmalıdır")]
     public string DuyuruKategorisi { get; set; } = string.Empty;
 
     /// <summary>
-    /// SMTP gönderici kategorisi (EMAIL_PERSONEL, EMAIL_REKTORLUK, vb.)
+    /// SMTP gönderici kategorisi (EMAIL_REKTOR, EMAIL_BID, EMAIL_DUYURU, vb.)
     /// Hangi email hesabından gönderileceğini belirler
     /// </summary>
     [Required(ErrorMessage = "Gönderici kategorisi zorunludur")]
     [StringLength(50, ErrorMessage = "Gönderici kategorisi en fazla 50 karakter olmalıdır")]
-    public string GondericiKategori { get; set; } = "EMAIL_PERSONEL";
+    public string GondericiKategori { get; set; } = "EMAIL_DUYURU";
 
     /// <summary>
     /// Duyuruyu onaylayacak kullanıcının ID'si (opsiyonel - MANAGER veya ADMIN rolünde olmalı)
@@ -183,8 +183,8 @@ public class AnnouncementDetailView
     public string? OlusturanKullaniciAdi { get; set; }
     public int? OnaylayanKullaniciId { get; set; }
     public string? OnaylayanKullaniciAdi { get; set; }
-    public string DuyuruKategorisi { get; set; } = "PERSONEL";
-    public string GondericiKategori { get; set; } = "EMAIL_PERSONEL";
+    public string DuyuruKategorisi { get; set; } = "GENEL_DUYURU_IMZASIZ";
+    public string GondericiKategori { get; set; } = "EMAIL_DUYURU";
     public DateTime OlusturmaTarihi { get; set; }
     public DateTime? GuncellemeTarihi { get; set; }
     public bool DosyaVarMi { get; set; }

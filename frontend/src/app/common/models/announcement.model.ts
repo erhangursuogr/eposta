@@ -6,7 +6,7 @@ export interface Announcement {
   icerik: string;
   icerikTipi: string; // EMAIL veya SOSYAL_MEDYA
   duyuruKategorisi: string; // İmza kategorisi (EMAIL_IMZA tablosundan)
-  gondericiKategori: string; // SMTP gönderici kategorisi (EMAIL_PERSONEL, EMAIL_REKTORLUK, vb.)
+  gondericiKategori: string; // SMTP gönderici kategorisi (EMAIL_DUYURU, EMAIL_REKTOR, vb.)
   durum: AnnouncementStatus;
   olusturanKullaniciId: number;
   olusturanKullaniciAdi: string;

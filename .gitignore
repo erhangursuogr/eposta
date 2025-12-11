@@ -374,14 +374,12 @@ backend/Data/hangfire/hangfire.db-shm
 backend/Data/hangfire/hangfire.db-wal
 backend/Data/hangfire/hangfire.db
 
-DEU_Angular_Template/
+# Data Protection Keys (encrypted, but should not be in git)
+backend/keys/
 backend/.env
-PRODUCTION-CHECKLIST.md
-DEPLOYMENT.md
 CLAUDE.md
 backend/.env.example
 frontend/nul
-PROJE_ANALIZ_RAPORU.md
-ARCHITECTURE.md
 backend/nul
-API_ENDPOINT_MAPPING.md
+nul
+CODE_AUDIT_REPORT.md

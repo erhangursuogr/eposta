@@ -148,15 +148,40 @@
                             </mat-chip>
                           }
                         </label>
-                        <div class="setting-actions">
-                          <button mat-icon-button matTooltip="Düzenle" (click)="openEditDialog(setting)" type="button" color="primary">
-                            <mat-icon>edit</mat-icon>
-                          </button>
-                        </div>
+                        @if (!isAuthMode(setting)) {
+                          <div class="setting-actions">
+                            <button mat-icon-button matTooltip="Düzenle" (click)="openEditDialog(setting)" type="button" color="primary">
+                              <mat-icon>edit</mat-icon>
+                            </button>
+                          </div>
+                        }
                       </div>
 
                       <!-- Setting Input -->
-                      @if (isTextarea(setting)) {
+                      @if (isAuthMode(setting)) {
+                        <!-- AUTH.MODE Toggle (LDAP/SSO) -->
+                        <div class="auth-mode-toggle">
+                          <mat-slide-toggle
+                            color="primary"
+                            [checked]="form.get(setting.key)?.value === '1'"
+                            (change)="onAuthModeToggle($event, setting.key, form)"
+                          >
+                            <span class="toggle-label">
+                              @if (form.get(setting.key)?.value === '1') {
+                                <mat-icon class="mode-icon">cloud</mat-icon>
+                                <strong>SSO (Keycloak)</strong> - Merkezi kimlik doğrulama
+                              } @else {
+                                <mat-icon class="mode-icon">lock</mat-icon>
+                                <strong>LDAP</strong> - Yerel kimlik doğrulama
+                              }
+                            </span>
+                          </mat-slide-toggle>
+                          <div class="auth-mode-hint">
+                            <mat-icon class="hint-icon">info</mat-icon>
+                            {{ setting.description }}
+                          </div>
+                        </div>
+                      } @else if (isTextarea(setting)) {
                         <mat-form-field appearance="outline" class="full-width">
                           <mat-label>{{ setting.description }}</mat-label>
                           <textarea
@@ -246,6 +271,7 @@
     <div class="info-content">
       <h3>Önemli Notlar</h3>
       <ul>
+        <li><strong>Kimlik Doğrulama Modu:</strong> LDAP ve SSO (Keycloak) arasında toggle ile geçiş yapabilirsiniz. SSO modunda kullanıcılar otomatik olarak Keycloak'a yönlendirilir.</li>
         <li><strong>Teknik Ayarlar:</strong> Bu sayfa sadece sistem altyapısı ile ilgili teknik ayarları içerir.</li>
         <li><strong>Email Ayarları:</strong> Email kategorileri ve SMTP grupları için ayrı yönetim sayfaları kullanın (Sistem Yönetimi menüsü altında).</li>
         <li><strong>Gizli Ayarlar:</strong> Şifreler ve hassas veriler için "Gizli Ayarları Göster" butonunu kullanın.</li>

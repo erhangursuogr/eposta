@@ -116,13 +116,6 @@ export class NavbarComponent {
   searchQuery = signal<string>('');
   showSearch = signal<boolean>(false);
 
-  logoutSound = new Audio('assets/logout.mp3');
-
-   playLogoutSound() {
-    this.logoutSound.currentTime = 0; // başa sar
-    this.logoutSound.play().catch(err => console.warn(err));
-  }
-
   ngOnInit(): void {
     this.updatePageInfo();
     this.loadDashboardStats();
@@ -357,6 +350,5 @@ export class NavbarComponent {
 
   logout(): void {
     this._userDataService.logout();
-    this.playLogoutSound();
   }
 }

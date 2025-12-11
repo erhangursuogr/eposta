@@ -17,7 +17,9 @@ public class LoginRequest
 public class LoginData
 {
     public string Token { get; set; } = string.Empty;
+    public string? IdToken { get; set; } // SSO Keycloak id_token (logout için)
     public UserInfo User { get; set; } = new();
+    public DateTime ExpiresAt { get; set; } // Token expiration timestamp (session timeout warning için)
 }
 
 public class UserInfo
@@ -31,4 +33,24 @@ public class UserInfo
     public int? GorevYeri { get; set; } // Görev yeri kodu (0=Rektörlük, 500=Mühendislik vb.)
     public string? GorevYeriAdi { get; set; } // Görev yeri adı
     public string Rol { get; set; } = string.Empty;
+}
+
+// SSO Keycloak DTOs
+public class SsoCallbackRequest
+{
+    public string Code { get; set; } = string.Empty;
+}
+
+public class SsoCallbackResult
+{
+    public LoginData LoginData { get; set; } = new();
+    public string? IdToken { get; set; } // Logout için gerekli
+}
+
+public class KeycloakTokenResponse
+{
+    public string AccessToken { get; set; } = string.Empty;
+    public string? IdToken { get; set; }
+    public string TokenType { get; set; } = string.Empty;
+    public int ExpiresIn { get; set; }
 }

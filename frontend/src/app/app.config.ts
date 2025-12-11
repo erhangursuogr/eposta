@@ -27,9 +27,16 @@ export const MY_DATE_FORMATS = {
 };
 
 // App başlatmadan önce user bilgisini yükle (cookie-based auth için gerekli)
+// SSO callback route'unda skip et (henüz token yok)
 function initializeApp() {
   const userDataService = inject(UserDataService);
   return () => new Promise<void>((resolve) => {
+    // SSO callback sayfasındaysak user bilgisi çekmeyi skip et
+    if (window.location.pathname.includes('/auth/callback')) {
+      resolve();
+      return;
+    }
+
     userDataService.setUser(() => {
       resolve();
     });

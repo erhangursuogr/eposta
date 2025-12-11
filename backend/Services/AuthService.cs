@@ -18,6 +18,9 @@ public interface IAuthService
     Task<ResponseModel> LogoutAsync(string? email, string? jti, string ipAddress);
 
     Task<ResponseDataModel<UserInfo>> GetCurrentUserAsync(string? email);
+
+    // SSO Keycloak support
+    Task<ResponseDataModel<SsoCallbackResult>> SsoCallbackAsync(string authorizationCode, string clientIP);
 }
 
 public class AuthService : IAuthService
@@ -31,6 +34,7 @@ public class AuthService : IAuthService
     private readonly ITokenBlacklistService _tokenBlacklistService;
     private readonly IMemoryCache _memoryCache;
     private readonly ISystemSettingsService _systemSettingsService;
+    private readonly HttpClient _httpClient;
 
     public AuthService(
         DeuEpostaContext context,
@@ -41,7 +45,8 @@ public class AuthService : IAuthService
         IServiceProvider serviceProvider,
         ITokenBlacklistService tokenBlacklistService,
         IMemoryCache memoryCache,
-        ISystemSettingsService systemSettingsService)
+        ISystemSettingsService systemSettingsService,
+        IHttpClientFactory httpClientFactory)
     {
         _context = context;
         _ldapService = ldapService;
@@ -50,6 +55,7 @@ public class AuthService : IAuthService
         _logger = logger;
         _serviceProvider = serviceProvider;
         _tokenBlacklistService = tokenBlacklistService;
+        _httpClient = httpClientFactory.CreateClient();
         _memoryCache = memoryCache;
         _systemSettingsService = systemSettingsService;
     }
@@ -162,12 +168,18 @@ public class AuthService : IAuthService
             securityService.RecordSuccessfulLogin(request.Email, clientIP);
             await LogLoginAttemptAsync(request.Email, "LDAP", clientIP, null, user.Id, userAgent);
 
+            // Token expiration hesapla (session timeout warning için)
+            var jwtSettings = _configuration.GetSection("Jwt");
+            var expirationMinutes = int.Parse(jwtSettings["ExpirationInMinutes"] ?? "720");
+            var expiresAt = DateTime.UtcNow.AddMinutes(expirationMinutes);
+
             response.Success = true;
             response.StatusCode = 200;
             response.Message = "Giriş başarılı";
             response.Data = new LoginData
             {
                 Token = token,
+                ExpiresAt = expiresAt,
                 User = new UserInfo
                 {
                     Id = user.Id,
@@ -496,6 +508,308 @@ public class AuthService : IAuthService
         {
             // Oracle 11g bağlantı hatası login'i engellemez, sadece log kaydı
             _logger.LogWarning(ex, "Failed to update user from Oracle 11g for {Email}", user.Email);
+        }
+    }
+
+    /// <summary>
+    /// SSO Keycloak callback - Authorization code'u işleyip JWT token döndürür
+    /// </summary>
+    public async Task<ResponseDataModel<SsoCallbackResult>> SsoCallbackAsync(string authorizationCode, string clientIP)
+    {
+        var response = new ResponseDataModel<SsoCallbackResult>();
+
+        try
+        {
+            // 1. Keycloak: Authorization code → Access token
+            var tokenResponse = await ExchangeCodeForTokenAsync(authorizationCode);
+
+            // 2. JWT token'dan email çıkart
+            if (string.IsNullOrEmpty(tokenResponse.AccessToken))
+            {
+                _logger.LogError("SSO: Access token is null or empty");
+                await LogLoginAttemptAsync("unknown", "SSO", clientIP, "Keycloak access token bulunamadı", null);
+                response.Success = false;
+                response.StatusCode = 401;
+                response.Message = "Access token bulunamadı";
+                return response;
+            }
+
+            var email = ExtractEmailFromToken(tokenResponse.AccessToken);
+            if (string.IsNullOrEmpty(email))
+            {
+                _logger.LogError("SSO: Email not found in token");
+                await LogLoginAttemptAsync("unknown", "SSO", clientIP, "Keycloak token'dan email çıkarılamadı", null);
+                response.Success = false;
+                response.StatusCode = 401;
+                response.Message = "Email bulunamadı";
+                return response;
+            }
+
+            // 3. Database'de kullanıcı validasyonu + JWT token oluşturma
+            var loginData = await ValidateAndGetSsoUserAsync(email, clientIP);
+
+            if (!loginData.Success || loginData.Data == null)
+            {
+                _logger.LogWarning("SSO user validation failed for {Email}", email);
+                response.Success = false;
+                response.StatusCode = loginData.StatusCode;
+                response.Message = loginData.Message;
+                return response;
+            }
+
+            // 4. Response oluştur
+            response.Success = true;
+            response.StatusCode = 200;
+            response.Message = "SSO giriş başarılı";
+            response.Data = new SsoCallbackResult
+            {
+                LoginData = loginData.Data,
+                IdToken = tokenResponse.IdToken
+            };
+
+            _logger.LogInformation("SSO login successful for {Email}", email);
+            return response;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "SSO callback error");
+            await LogLoginAttemptAsync("unknown", "SSO", clientIP, "Keycloak callback hatası", null);
+            response.Success = false;
+            response.StatusCode = 500;
+            response.Message = $"SSO hatası: {ex.Message}";
+            return response;
+        }
+    }
+
+    private async Task<KeycloakTokenResponse> ExchangeCodeForTokenAsync(string code)
+    {
+        var tokenUrl = _configuration["Keycloak:TokenEndpoint"]
+            ?? throw new InvalidOperationException("Keycloak:TokenEndpoint not configured");
+
+        var clientId = _configuration["Keycloak:ClientId"]
+            ?? throw new InvalidOperationException("Keycloak:ClientId not configured");
+
+        var clientSecret = _configuration["Keycloak:ClientSecret"]
+            ?? throw new InvalidOperationException("Keycloak:ClientSecret not configured");
+
+        var redirectUri = _configuration["Keycloak:RedirectUri"]
+            ?? throw new InvalidOperationException("Keycloak:RedirectUri not configured");
+
+        var postData = new Dictionary<string, string>
+        {
+            { "grant_type", "authorization_code" },
+            { "code", code },
+            { "client_id", clientId },
+            { "client_secret", clientSecret },
+            { "redirect_uri", redirectUri }
+        };
+
+        var content = new FormUrlEncodedContent(postData);
+        var response = await _httpClient.PostAsync(tokenUrl, content);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = await response.Content.ReadAsStringAsync();
+            _logger.LogError("Keycloak token exchange failed: {StatusCode}, {Error}",
+                response.StatusCode, error);
+            throw new Exception($"Token exchange failed: {response.StatusCode}");
+        }
+
+        var json = await response.Content.ReadAsStringAsync();
+        var tokenData = System.Text.Json.JsonSerializer.Deserialize<KeycloakTokenResponse>(json, new System.Text.Json.JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true,
+            PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.SnakeCaseLower
+        });
+
+        if (tokenData == null)
+        {
+            _logger.LogError("Keycloak: Failed to deserialize token response");
+            throw new Exception("Invalid token response");
+        }
+
+        return tokenData;
+    }
+
+    private string? ExtractEmailFromToken(string accessToken)
+    {
+        try
+        {
+            var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+            var token = handler.ReadJwtToken(accessToken);
+
+            // Email claim
+            var email = token.Claims.FirstOrDefault(c => c.Type == "email")?.Value;
+            if (!string.IsNullOrEmpty(email)) return email;
+
+            // Fallback: preferred_username
+            var username = token.Claims.FirstOrDefault(c => c.Type == "preferred_username")?.Value;
+            if (!string.IsNullOrEmpty(username)) return username;
+
+            // Fallback: sub
+            var sub = token.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
+            if (!string.IsNullOrEmpty(sub)) return sub;
+
+            _logger.LogWarning("SSO: No email claim found in Keycloak token");
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "SSO: Failed to parse Keycloak token");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// SSO Keycloak callback için kullanıcı validasyonu ve JWT token oluşturma (PRIVATE)
+    /// </summary>
+    private async Task<ResponseDataModel<LoginData>> ValidateAndGetSsoUserAsync(string email, string clientIP)
+    {
+        var response = new ResponseDataModel<LoginData>();
+
+        try
+        {
+            // Email normalize
+            email = email.Trim().ToLower();
+            if (!email.Contains("@"))
+            {
+                email = email + "@deu.edu.tr";
+            }
+            else if (!email.EndsWith("@deu.edu.tr"))
+            {
+                response.Success = false;
+                response.StatusCode = 400;
+                response.Message = "Sadece @deu.edu.tr uzantılı e-posta adresleri kabul edilir";
+                return response;
+            }
+
+            // Database'de kullanıcı var mı?
+            var user = await _context.Kullanicilar
+                .Include(k => k.Rol)
+                .FirstOrDefaultAsync(k => k.Email == email);
+
+            if (user == null)
+            {
+                _logger.LogWarning("SSO login attempt for non-existent user: {Email}", email);
+                await LogLoginAttemptAsync(email, "SSO", clientIP, "Kullanıcı sistemde kayıtlı değil", null);
+                response.Success = false;
+                response.StatusCode = 404;
+                response.Message = "Kullanıcı bulunamadı";
+                return response;
+            }
+
+            if (user.Aktif != "Y")
+            {
+                _logger.LogWarning("SSO login attempt for inactive user: {Email}", email);
+                await LogLoginAttemptAsync(email, "SSO", clientIP, "Kullanıcı aktif değil", null);
+                response.Success = false;
+                response.StatusCode = 403;
+                response.Message = "Kullanıcı aktif değil";
+                return response;
+            }
+
+            // Oracle 11g sync (LDAP login'deki gibi)
+            await UpdateUserFromOracle11gAsync(user);
+
+            // Son giriş tarihini güncelle ve tüm değişiklikleri kaydet
+            user.SonGirisTarihi = DateTime.Now;
+            user.GuncellemeTarihi = DateTime.Now;
+            await _context.SaveChangesAsync();
+
+            // JWT token oluştur (LDAP login ile aynı claim yapısı)
+            var jwtSecret = _configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key not configured");
+            var key = Encoding.ASCII.GetBytes(jwtSecret);
+
+            var jti = Guid.NewGuid().ToString();
+
+            var claims = new List<Claim>
+            {
+                new Claim(JwtRegisteredClaimNames.Jti, jti),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Name, user.AdSoyad ?? user.Email),
+                new Claim(ClaimTypes.Role, user.Rol?.RolKodu ?? RolKodu.VIEWER), // RolKodu kullan (RolAdi değil)
+                new Claim("KullaniciAdi", user.KullaniciAdi),
+                new Claim("RolKodu", user.Rol?.RolKodu ?? RolKodu.VIEWER),
+                new Claim("ip", clientIP)
+            };
+
+            // GorevYeri claims ekle (nullable olduğu için opsiyonel)
+            if (user.GorevYeri.HasValue)
+            {
+                claims.Add(new Claim("GorevYeri", user.GorevYeri.Value.ToString()));
+            }
+
+            if (!string.IsNullOrEmpty(user.GorevYeriAdi))
+            {
+                claims.Add(new Claim("GorevYeriAdi", user.GorevYeriAdi));
+            }
+
+            var jwtSettings = _configuration.GetSection("Jwt");
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.UtcNow.AddMinutes(int.Parse(jwtSettings["ExpirationInMinutes"] ?? "720")),
+                Issuer = jwtSettings["Issuer"],
+                Audience = jwtSettings["Audience"],
+                SigningCredentials = new SigningCredentials(
+                    new SymmetricSecurityKey(key),
+                    SecurityAlgorithms.HmacSha256Signature)
+            };
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            var jwtToken = tokenHandler.WriteToken(token);
+
+            // Login log (hem audit hem login attempt)
+            await LogLoginAttemptAsync(email, "SSO", clientIP, null, user.Id);
+
+            using var logScope = _serviceProvider.CreateScope();
+            var auditLogService = logScope.ServiceProvider.GetRequiredService<IAuditLogService>();
+            await auditLogService.LogAsync(
+                kategori: "USER",
+                islem: "SSO_LOGIN",
+                detay: $"SSO login başarılı - {email} ({clientIP})",
+                kullaniciId: user.Id
+            );
+
+            _logger.LogInformation("SSO login successful for {Email} from {IP}", email, clientIP);
+
+            // Token expiration hesapla (session timeout warning için)
+            var expirationMinutes = int.Parse(jwtSettings["ExpirationInMinutes"] ?? "720");
+            var expiresAt = DateTime.UtcNow.AddMinutes(expirationMinutes);
+
+            response.Success = true;
+            response.StatusCode = 200;
+            response.Message = "SSO giriş başarılı";
+            response.Data = new LoginData
+            {
+                Token = jwtToken,
+                ExpiresAt = expiresAt,
+                User = new UserInfo
+                {
+                    Id = user.Id,
+                    KullaniciAdi = user.KullaniciAdi,
+                    Email = user.Email,
+                    AdSoyad = user.AdSoyad ?? "",
+                    Departman = user.Departman,
+                    Unvan = user.Unvan,
+                    GorevYeri = user.GorevYeri,
+                    GorevYeriAdi = user.GorevYeriAdi,
+                    Rol = user.Rol?.RolKodu ?? RolKodu.VIEWER // RolKodu kullan (RolAdi değil)
+                }
+            };
+
+            return response;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "SSO user validation error for {Email}", email);
+            await LogLoginAttemptAsync(email, "SSO", clientIP, "Sistem hatası", null);
+            response.Success = false;
+            response.StatusCode = 500;
+            response.Message = $"SSO validasyon hatası: {ex.Message}";
+            return response;
         }
     }
 }

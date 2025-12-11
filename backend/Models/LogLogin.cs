@@ -8,7 +8,7 @@ public class LogLogin
     public string? Email { get; set; }
     public string? IpAdres { get; set; }
     public string? UserAgent { get; set; }
-    public string GirisTuru { get; set; } = string.Empty; // LDAP, LOCAL, API
+    public string GirisTuru { get; set; } = string.Empty; // LDAP, SSO, API
     public string Basarili { get; set; } = "Y"; // Y, N
     public string? HataMesaji { get; set; }
     public DateTime GirisTarihi { get; set; } = DateTime.Now;

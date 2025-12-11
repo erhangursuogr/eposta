@@ -4,6 +4,7 @@ import { LayoutComponent } from './components/layout/layout.component';
 import { HomeComponent } from './components/home/home.component';
 import { NotfoundComponent } from './components/notfound/notfound.component';
 import { AccessDeniedComponent } from './components/access-denied/access-denied.component';
+import { SsoCallbackComponent } from './components/sso-callback/sso-callback.component';
 import { authGuard } from './common/guards/auth.guard';
 import { roleGuard } from './common/guards/role.guard';
 import { loginGuard } from './common/guards/login.guard';
@@ -14,6 +15,11 @@ export const routes: Routes = [
     component: LoginComponent,
     canActivate: [loginGuard],
     title: 'Giriş - DEÜ Duyuru Yönetim Sistemi'
+  },
+  {
+    path: 'auth/callback',
+    component: SsoCallbackComponent,
+    title: 'SSO Kimlik Doğrulama'
   },
   {
     path: '',

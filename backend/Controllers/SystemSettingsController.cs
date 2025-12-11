@@ -75,7 +75,7 @@ public class SystemSettingsController : ControllerBase
     // Frontend: GET /api/announcements/categories (announcement.service.ts:30)
 
     /// <summary>
-    /// SMTP gönderici kategorilerini getirir (EMAIL_PERSONEL, EMAIL_REKTORLUK, vb.)
+    /// SMTP gönderici kategorilerini getirir (EMAIL_DUYURU, EMAIL_REKTOR, vb.)
     /// Frontend dropdown için kullanılır
     /// </summary>
     [HttpGet("smtp-categories")]

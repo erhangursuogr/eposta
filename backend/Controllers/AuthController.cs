@@ -1,3 +1,4 @@
+using DeuEposta.Models;
 using DeuEposta.Models.DTOs;
 using DeuEposta.Services;
 using DeuEposta.Utils;
@@ -14,12 +15,21 @@ public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
     private readonly ISecurityService _securityService;
+    private readonly ISystemSettingsService _systemSettingsService;
+    private readonly IConfiguration _configuration;
     private readonly ILogger<AuthController> _logger;
 
-    public AuthController(IAuthService authService, ISecurityService securityService, ILogger<AuthController> logger)
+    public AuthController(
+        IAuthService authService,
+        ISecurityService securityService,
+        ISystemSettingsService systemSettingsService,
+        IConfiguration configuration,
+        ILogger<AuthController> logger)
     {
         _authService = authService;
         _securityService = securityService;
+        _systemSettingsService = systemSettingsService;
+        _configuration = configuration;
         _logger = logger;
     }
 
@@ -35,12 +45,13 @@ public class AuthController : ControllerBase
         // SECURITY: Token'ı HttpOnly cookie'de gönder (XSS koruması)
         if (response.Success && response.Data?.Token != null)
         {
+            var jwtExpiration = int.Parse(_configuration["Jwt:ExpirationInMinutes"] ?? "720");
             var cookieOptions = new CookieOptions
             {
                 HttpOnly = true,        // JavaScript'ten erişilemez (XSS koruması)
                 Secure = Request.IsHttps, // HTTPS'te true, HTTP'de false (development için)
                 SameSite = SameSiteMode.Lax, // Strict yerine Lax (CORS ile uyumlu)
-                Expires = DateTimeOffset.UtcNow.AddHours(12), // 12 saat
+                Expires = DateTimeOffset.UtcNow.AddMinutes(jwtExpiration), // Config'den (default: 720 dakika)
                 Path = "/"
             };
 
@@ -74,17 +85,20 @@ public class AuthController : ControllerBase
 
         var response = await _authService.LogoutAsync(email, jti, ipAddress);
 
-        // SECURITY: Cookie'yi sil
+        // SECURITY: Cookie'leri sil (auth_token + id_token)
         if (response.Success)
         {
-            Response.Cookies.Delete("auth_token", new CookieOptions
+            var cookieOptions = new CookieOptions
             {
                 HttpOnly = true,
                 Secure = Request.IsHttps,
                 SameSite = SameSiteMode.Lax,
                 Path = "/"
-            });
-            _logger.LogInformation("Auth cookie deleted for user {Email}", email);
+            };
+
+            Response.Cookies.Delete("auth_token", cookieOptions);
+            Response.Cookies.Delete("id_token", cookieOptions); // SSO id_token
+            _logger.LogInformation("Auth and id_token cookies deleted for user {Email}", email);
         }
 
         return response.StatusCode switch
@@ -103,6 +117,67 @@ public class AuthController : ControllerBase
         var email = User.FindFirst(ClaimTypes.Email)?.Value;
 
         var response = await _authService.GetCurrentUserAsync(email);
+
+        return response.StatusCode switch
+        {
+            400 => BadRequest(response),
+            401 => Unauthorized(response),
+            404 => NotFound(response),
+            500 => StatusCode(500, response),
+            _ => Ok(response)
+        };
+    }
+
+    // ========== SSO KEYCLOAK ENDPOINTS (SIMPLE) ==========
+
+    /// <summary>
+    /// AUTH_MODE değerini döndürür (0=LDAP, 1=SSO)
+    /// </summary>
+    [HttpGet("mode")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetAuthMode()
+    {
+        var mode = await _systemSettingsService.GetSettingValueAsync("AUTH", "MODE", "0");
+        return Ok(new { mode });
+    }
+
+    /// <summary>
+    /// Keycloak SSO callback - Authorization code'u JWT token'a çevirir
+    /// </summary>
+    [HttpPost("sso/callback")]
+    [AllowAnonymous]
+    [EnableRateLimiting("Login")]
+    public async Task<IActionResult> SsoCallback([FromBody] SsoCallbackRequest request)
+    {
+        if (string.IsNullOrEmpty(request.Code))
+        {
+            return BadRequest(ResponseDataModel<object>.ErrorResult("Authorization code is required", 400));
+        }
+
+        var clientIP = HttpContextHelper.GetClientIPAddress(HttpContext);
+        var response = await _authService.SsoCallbackAsync(request.Code, clientIP);
+
+        if (response.Success && response.Data != null)
+        {
+            // HttpOnly cookie set et (auth_token + id_token)
+            var jwtExpiration = int.Parse(_configuration["Jwt:ExpirationInMinutes"] ?? "720");
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = Request.IsHttps,
+                SameSite = SameSiteMode.Lax,
+                Expires = DateTimeOffset.UtcNow.AddMinutes(jwtExpiration), // Config'den (default: 720 dakika)
+                Path = "/"
+            };
+
+            Response.Cookies.Append("auth_token", response.Data.LoginData.Token, cookieOptions);
+
+            // SSO id_token cookie (logout için)
+            if (!string.IsNullOrEmpty(response.Data.IdToken))
+            {
+                Response.Cookies.Append("id_token", response.Data.IdToken, cookieOptions);
+            }
+        }
 
         return response.StatusCode switch
         {

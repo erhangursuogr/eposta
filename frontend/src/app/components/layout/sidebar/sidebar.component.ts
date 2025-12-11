@@ -5,8 +5,7 @@ import {
   Component,
   EventEmitter,
   inject,
-  Output,
-  computed
+  Output
 } from '@angular/core';
 import { SharedModule } from '../../../common/shared/shared.module';
 import { MatListModule } from '@angular/material/list';
@@ -76,13 +75,6 @@ export class SidebarComponent {
   standaloneMenuItems: MenuItem[] = [];
   mainRoute = '/';
 
-  logoutSound = new Audio('assets/logout.mp3');
-
-   playLogoutSound() {
-    this.logoutSound.currentTime = 0; // başa sar
-    this.logoutSound.play().catch(err => console.warn(err));
-  }
-
   constructor(changeDetectorRef: ChangeDetectorRef, media: MediaMatcher) {
     this.mobileQuery = media.matchMedia('(max-width: 1000px)');
     this._mobileQueryListener = () => changeDetectorRef.detectChanges();
@@ -95,7 +87,6 @@ export class SidebarComponent {
 
   logout() {
     this._userDataService.logout();
-    this.playLogoutSound();
   }
 
   hideSideBar() {

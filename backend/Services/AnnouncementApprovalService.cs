@@ -693,7 +693,7 @@ public class AnnouncementApprovalService : IAnnouncementApprovalService
                 ToRecipients = toSet.ToList(),
                 CcRecipients = ccSet.ToList(),
                 BccRecipients = bccSet.ToList(),
-                Category = announcement.GondericiKategori, // SMTP gönderici kategorisi (EMAIL_PERSONEL, EMAIL_REKTORLUK, vb.)
+                Category = announcement.GondericiKategori, // SMTP gönderici kategorisi (EMAIL_DUYURU, EMAIL_REKTOR, vb.)
                 Attachments = attachments
             };
 

@@ -66,7 +66,7 @@ public class EmailCategoryService : IEmailCategoryService
     }
 
     /// <summary>
-    /// Aktif SMTP gönderici kategorilerini getirir (EMAIL_PERSONEL, EMAIL_REKTORLUK, vb.)
+    /// Aktif SMTP gönderici kategorilerini getirir (EMAIL_DUYURU, EMAIL_REKTOR, vb.)
     /// Frontend dropdown için kullanılır
     /// </summary>
     public async Task<List<string>> GetActiveEmailCategoriesAsync()
@@ -80,7 +80,7 @@ public class EmailCategoryService : IEmailCategoryService
                            s.AyarKategori != "EMAIL_ORTAK" &&
                            s.AyarKategori != "EMAIL_IMZA" &&
                            s.AyarAnahtar == "FROM_EMAIL") // Her SMTP grubunun FROM_EMAIL kaydı var
-                .Select(s => s.AyarKategori) // EMAIL_PERSONEL, EMAIL_REKTORLUK, vb.
+                .Select(s => s.AyarKategori) // EMAIL_DUYURU, EMAIL_REKTOR, vb.
                 .Distinct()
                 .ToListAsync();
 
@@ -90,7 +90,7 @@ public class EmailCategoryService : IEmailCategoryService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting active SMTP sender categories");
-            return new List<string> { "EMAIL_PERSONEL" }; // Fallback
+            return new List<string> { "EMAIL_DUYURU" }; // Fallback
         }
     }
 
@@ -162,7 +162,7 @@ public class EmailCategoryService : IEmailCategoryService
 
     /// <summary>
     /// SMTP gönderici kategorisinin geçerli olup olmadığını kontrol eder
-    /// Örnek: "EMAIL_PERSONEL", "EMAIL_REKTORLUK"
+    /// Örnek: "EMAIL_DUYURU", "EMAIL_REKTOR"
     /// </summary>
     public async Task<bool> IsValidCategoryAsync(string category)
     {
@@ -182,13 +182,13 @@ public class EmailCategoryService : IEmailCategoryService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error validating SMTP category {Category}", category);
-            return category == "EMAIL_PERSONEL"; // Fallback
+            return category == "EMAIL_DUYURU"; // Fallback
         }
     }
 
     /// <summary>
     /// SMTP kategorisinin görünen adını getirir
-    /// Örnek: "EMAIL_PERSONEL" → "Personel duyuruları gönderici email adresi"
+    /// Örnek: "EMAIL_DUYURU" → "Personel duyuruları gönderici email adresi"
     /// </summary>
     public async Task<string> GetCategoryDisplayNameAsync(string category)
     {
@@ -214,7 +214,7 @@ public class EmailCategoryService : IEmailCategoryService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting display name for SMTP category {Category}", category);
-            return category.Replace("EMAIL_", ""); // "EMAIL_PERSONEL" → "PERSONEL"
+            return category.Replace("EMAIL_", ""); // "EMAIL_DUYURU" → "PERSONEL"
         }
     }
 }

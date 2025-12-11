@@ -42,8 +42,8 @@ export class AnnouncementFormStateService {
     this.announcementForm = this.fb.group({
       konu: ['', Validators.required],
       icerik: ['', Validators.required],
-      duyuruKategorisi: ['EMAIL_IMZA', Validators.required],
-      gondericiKategori: ['EMAIL_PERSONEL', Validators.required],
+      duyuruKategorisi: ['GENEL_DUYURU_IMZASIZ', Validators.required],
+      gondericiKategori: ['EMAIL_DUYURU', Validators.required],
       aciklama: [''],
       onaylayanKullaniciId: [null],
       gruplar: [[]],
@@ -133,10 +133,12 @@ export class AnnouncementFormStateService {
    * Reset form and state
    */
   resetForm(): void {
-    this.announcementForm.reset({
-      duyuruKategorisi: 'EMAIL_IMZA',
-      gondericiKategori: 'EMAIL_PERSONEL'
-    });
+    if (this.announcementForm) {
+      this.announcementForm.reset({
+        duyuruKategorisi: 'GENEL_DUYURU_IMZASIZ',
+        gondericiKategori: 'EMAIL_DUYURU'
+      });
+    }
     this.selectedGroups.set([]);
     this.manualEmails.set([]);
   }

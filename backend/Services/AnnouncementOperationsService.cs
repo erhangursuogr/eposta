@@ -332,7 +332,8 @@ public class AnnouncementOperationsService : IAnnouncementOperationsService
                 ToRecipients = new List<string> { targetEmail },
                 Subject = subject,
                 Body = body,
-                IsHtml = true
+                IsHtml = true,
+                Category = announcement.GondericiKategori
             };
 
             var emailResult = await _emailService.SendEmailAsync(emailRequest);
@@ -420,8 +421,8 @@ public class AnnouncementOperationsService : IAnnouncementOperationsService
                     .Replace("{{gonderen}}", announcement.OlusturanKullanici?.AdSoyad ?? "DEÜ");
             }
 
-            // Email kategori ayarlarını al
-            var emailConfig = await _emailCategoryService.GetEmailConfigByCategoryAsync(announcement.DuyuruKategorisi);
+            // Email kategori ayarlarını al (SMTP gönderici kategorisi kullanılmalı)
+            var emailConfig = await _emailCategoryService.GetEmailConfigByCategoryAsync(announcement.GondericiKategori);
 
             // İmza ekle
             var signature = await _systemSettingsService.GetEmailSignatureAsync(announcement.DuyuruKategorisi);

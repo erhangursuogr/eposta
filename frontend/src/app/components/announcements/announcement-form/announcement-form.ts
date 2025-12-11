@@ -128,8 +128,9 @@ export class AnnouncementForm implements OnInit, AfterViewInit, OnDestroy {
   uploadProgress = this.fileManager.uploadProgress;
   isDraggingOver = this.fileManager.isDraggingOver;
 
-
   ngOnInit(): void {
+    // Form ve state'i sıfırla (singleton servis olduğu için önceki değerler kalabilir)
+    this.formState.resetForm();
     this.formState.initForm();
     this.formState.loadEmailGroups();
     this.loadApprovers();
@@ -137,10 +138,10 @@ export class AnnouncementForm implements OnInit, AfterViewInit, OnDestroy {
     this.loadSenderCategories();
     this.generateSecureSessionId(); // SECURITY: Backend'den güvenli session ID al
 
-    // Merkez personeli değilse (gorevYeri !== 0), varsayılan olarak EMAIL_SISTEM kullan
+    // Merkez personeli değilse (gorevYeri !== 0), varsayılan olarak EMAIL_DUYURU kullan
     // ve gondericiKategori alanından required validasyonunu kaldır
     if (!this.isMerkezPersoneli()) {
-      this.formState.announcementForm.patchValue({ gondericiKategori: 'EMAIL_SISTEM' });
+      this.formState.announcementForm.patchValue({ gondericiKategori: 'EMAIL_DUYURU' });
       this.formState.announcementForm.get('gondericiKategori')?.clearValidators();
       this.formState.announcementForm.get('gondericiKategori')?.updateValueAndValidity();
     }
@@ -282,7 +283,7 @@ export class AnnouncementForm implements OnInit, AfterViewInit, OnDestroy {
     this.http.get<ApiResponse<any>>(`${environment.apiUrl}/api/admin/system-settings/smtp-categories`).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
         if (response.success && response.data) {
-          // EMAIL_SISTEM kategorisini filtrele (sadece sistem tarafından kullanılır)
+          // EMAIL_DUYURU kategorisini filtrele (sadece sistem tarafından kullanılır)
           const filtered = response.data.filter((cat: any) => cat.key !== 'EMAIL_SISTEM');
           this.formState.setSenderCategories(filtered);
         }
@@ -292,7 +293,7 @@ export class AnnouncementForm implements OnInit, AfterViewInit, OnDestroy {
         this.toastr.error(errorMessage);
         // Fallback: Default değer
         this.formState.setSenderCategories([
-          { key: 'EMAIL_PERSONEL', displayName: 'Personel', email: 'duyuru@deu.edu.tr' }
+          { key: 'EMAIL_DUYURU', displayName: 'Genel Duyuru', email: 'duyuru@deu.edu.tr' }
         ]);
       }
     });
@@ -318,7 +319,7 @@ export class AnnouncementForm implements OnInit, AfterViewInit, OnDestroy {
             konu: announcement.konu,
             icerik: announcement.icerik,
             duyuruKategorisi: announcement.duyuruKategorisi || '',
-            gondericiKategori: announcement.gondericiKategori || 'EMAIL_PERSONEL',
+            gondericiKategori: announcement.gondericiKategori || 'EMAIL_DUYURU',
             onaylayanKullaniciId: announcement.onaylayanKullaniciId,
             aciklama: announcement.aciklama || ''
           });

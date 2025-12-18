@@ -70,14 +70,14 @@ export class EmailGroupCreateDialog {
   // Grup tipleri
   grupTipleri = [
     {
-      value: GrupTipi.NORMAL,
-      label: 'Standart Grup',
+      value: GrupTipi.MANUEL,
+      label: 'Manuel Grup',
       icon: 'group',
-      description: 'Manuel olarak üye ekleyip çıkarabileceğiniz klasik grup. TO/CC/BCC seçenekleri kullanılabilir.',
+      description: 'Manuel olarak üye ekleyip çıkarabileceğiniz klasik grup. Sadece BCC olarak kullanılabilir (KVKK/GDPR uyumu).',
       color: '#1976D2'
     },
     {
-      value: GrupTipi.STATIK,
+      value: GrupTipi.DOSYA,
       label: 'Dosyadan Yüklenen Grup',
       icon: 'upload_file',
       description: 'Excel/CSV/TXT dosyasından toplu üye yükleme. Sadece BCC olarak kullanılabilir.',
@@ -234,12 +234,12 @@ export class EmailGroupCreateDialog {
     }
 
     // Tip bazlı validasyon
-    if (selectedType === GrupTipi.NORMAL && this.normalMembers.length === 0) {
+    if (selectedType === GrupTipi.MANUEL && this.normalMembers.length === 0) {
       this.toastr.warning('En az bir üye eklemelisiniz');
       return;
     }
 
-    if (selectedType === GrupTipi.STATIK && !this.selectedFile) {
+    if (selectedType === GrupTipi.DOSYA && !this.selectedFile) {
       this.toastr.warning('Lütfen bir dosya seçiniz');
       return;
     }
@@ -256,7 +256,7 @@ export class EmailGroupCreateDialog {
     };
 
     // Tip bazlı ek alanlar
-    if (selectedType === GrupTipi.NORMAL) {
+    if (selectedType === GrupTipi.MANUEL) {
       request.statikUyeler = this.normalMembers;
     }
 
@@ -271,8 +271,8 @@ export class EmailGroupCreateDialog {
   private createGroup(request: CreateEmailGroupRequest): void {
     this.loading.set(true);
 
-    // STATIK grup için dosya upload
-    if (this.selectedType() === GrupTipi.STATIK && this.selectedFile) {
+    // DOSYA grup için dosya upload
+    if (this.selectedType() === GrupTipi.DOSYA && this.selectedFile) {
       this.createStatikGroupWithFile(request);
       return;
     }

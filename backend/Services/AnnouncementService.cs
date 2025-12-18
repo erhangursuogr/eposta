@@ -34,6 +34,7 @@ public class AnnouncementService : IAnnouncementService
     private readonly IAuditLogService _auditLog;
     private readonly IScheduleService _scheduleService;
     private readonly IFileService _fileService;
+    private readonly ISecurityService _securityService;
     private readonly string _uploadPath;
 
     public AnnouncementService(
@@ -46,6 +47,7 @@ public class AnnouncementService : IAnnouncementService
         IAuditLogService auditLog,
         IScheduleService scheduleService,
         IFileService fileService,
+        ISecurityService securityService,
         IConfiguration configuration)
     {
         _context = context;
@@ -57,6 +59,7 @@ public class AnnouncementService : IAnnouncementService
         _auditLog = auditLog;
         _scheduleService = scheduleService;
         _fileService = fileService;
+        _securityService = securityService;
 
         var uploadPath = configuration["FileSettings:UploadPath"] ?? "uploads";
         _uploadPath = Path.Combine(Directory.GetCurrentDirectory(), uploadPath);
@@ -331,7 +334,7 @@ public class AnnouncementService : IAnnouncementService
             // GÜVENLİK: HTML içeriğini sanitize et (XSS önlemi)
             if (!string.IsNullOrEmpty(announcement.Icerik))
             {
-                announcement.Icerik = SanitizeHtml(announcement.Icerik);
+                announcement.Icerik = _securityService.SanitizeHtmlContent(announcement.Icerik);
             }
 
             // Şablon seçilmişse, şablon içeriğini duyuruya yükle
@@ -391,9 +394,8 @@ public class AnnouncementService : IAnnouncementService
 
                 foreach (var grup in groups)
                 {
-                    // Grup tipine göre kategori belirle
-                    // NORMAL: TO, STATIK/DINAMIK/DEBIS: BCC (güvenlik için)
-                    var kategori = grup.GrupTipi == "NORMAL" ? "TO" : "BCC";
+                    // Güvenlik: Tüm gruplar BCC-only (KVKK/GDPR uyumu)
+                    var kategori = "BCC";
 
                     // KRİTİK: DEBIS grupları SADECE BCC olabilir (güvenlik kontrolü)
                     if (!ValidateDebisGroupSecurity(grup, kategori, out var debisError))
@@ -422,7 +424,7 @@ public class AnnouncementService : IAnnouncementService
                         DuyuruId = announcement.Id,
                         Email = email,
                         AliciTipi = "MANUEL",
-                        AliciKategorisi = "TO",
+                        AliciKategorisi = "BCC",
                         OlusturmaTarihi = DateTime.Now
                     });
                 }
@@ -619,7 +621,7 @@ public class AnnouncementService : IAnnouncementService
                     // GÜVENLİK: HTML içeriğini sanitize et (XSS önlemi)
                     if (!string.IsNullOrEmpty(announcement.Icerik))
                     {
-                        announcement.Icerik = SanitizeHtml(announcement.Icerik);
+                        announcement.Icerik = _securityService.SanitizeHtmlContent(announcement.Icerik);
                     }
                 }
 
@@ -669,9 +671,8 @@ public class AnnouncementService : IAnnouncementService
                             return ResponseModel.ErrorResult($"Grup ID {grupId} bulunamadı", 404);
                         }
 
-                        // Grup tipine göre kategori belirle
-                        // NORMAL: TO, STATIK/DINAMIK/DEBIS: BCC (güvenlik için)
-                        var kategori = grup.GrupTipi == "NORMAL" ? "TO" : "BCC";
+                        // Güvenlik: Tüm gruplar BCC-only (KVKK/GDPR uyumu)
+                        var kategori = "BCC";
 
                         // KRİTİK: DEBIS grupları SADECE BCC olabilir (çift güvenlik kontrolü)
                         if (!ValidateDebisGroupSecurity(grup, kategori, out var debisError))
@@ -701,7 +702,7 @@ public class AnnouncementService : IAnnouncementService
                             DuyuruId = id,
                             Email = email,
                             AliciTipi = "MANUEL",
-                            AliciKategorisi = "TO", // Manuel emailler varsayılan TO
+                            AliciKategorisi = "BCC", // Tüm emailler BCC (KVKK/GDPR)
                             GonderimDurumu = "BEKLIYOR"
                         });
                     }
@@ -1026,102 +1027,6 @@ public class AnnouncementService : IAnnouncementService
     }
 
     #endregion Helper Methods
-
-    /// <summary>
-    /// GÜVENLİK: HTML içeriğini sanitize eder - XSS saldırılarına karşı koruma
-    /// SunEditor'den gelen HTML içeriğindeki tehlikeli etiket ve attribute'ları temizler
-    /// </summary>
-    private string SanitizeHtml(string? html)
-    {
-        if (string.IsNullOrWhiteSpace(html))
-            return string.Empty;
-
-        // Tehlikeli script ve event handler'ları temizle
-        var sanitized = html;
-
-        // GÜVENLIK: Regex timeout (ReDoS prevention)
-        var regexTimeout = TimeSpan.FromSeconds(2);
-
-        try
-        {
-            // 1) <script> taglerini tamamen kaldır (case-insensitive)
-            sanitized = System.Text.RegularExpressions.Regex.Replace(
-                sanitized,
-                @"<script[^>]*>[\s\S]*?</script>",
-                "",
-                System.Text.RegularExpressions.RegexOptions.IgnoreCase,
-                regexTimeout);
-
-            // 2) Inline JavaScript event handler'ları kaldır (onclick, onerror, onload, vb.)
-            var dangerousEvents = new[] { "onload", "onerror", "onclick", "onmouseover", "onmouseout", "onfocus", "onblur",
-                "onchange", "onsubmit", "onkeydown", "onkeyup", "onkeypress", "ondblclick", "oncontextmenu" };
-
-            foreach (var eventName in dangerousEvents)
-            {
-                sanitized = System.Text.RegularExpressions.Regex.Replace(
-                    sanitized,
-                    $@"{eventName}\s*=\s*[""'][^""']*[""']",
-                    "",
-                    System.Text.RegularExpressions.RegexOptions.IgnoreCase,
-                    regexTimeout);
-            }
-
-            // 3) javascript: protocol'ünü kaldır
-            sanitized = System.Text.RegularExpressions.Regex.Replace(
-                sanitized,
-                @"javascript\s*:",
-                "",
-                System.Text.RegularExpressions.RegexOptions.IgnoreCase,
-                regexTimeout);
-
-            // 4) data: URI scheme'i kaldır (Base64 encoded XSS) - Sadece güvenli image formatlarına izin ver
-            // GÜVENLIK: SVG içinde JavaScript olabileceğinden SVG'ye izin verme
-            // Sadece: image/png, image/jpeg, image/jpg, image/gif, image/webp;base64
-            sanitized = System.Text.RegularExpressions.Regex.Replace(
-                sanitized,
-                @"data\s*:(?!image/(png|jpeg|jpg|gif|webp);base64,)[^""'>\s]*",
-                "",
-                System.Text.RegularExpressions.RegexOptions.IgnoreCase,
-                regexTimeout);
-
-            // 5) <iframe>, <object>, <embed> taglerini kaldır
-            sanitized = System.Text.RegularExpressions.Regex.Replace(
-                sanitized,
-                @"<(iframe|object|embed|applet)[^>]*>[\s\S]*?</(iframe|object|embed|applet)>",
-                "",
-                System.Text.RegularExpressions.RegexOptions.IgnoreCase,
-                regexTimeout);
-
-            // 6) <meta> ve <link> taglerini kaldır
-            sanitized = System.Text.RegularExpressions.Regex.Replace(
-                sanitized,
-                @"<(meta|link)[^>]*>",
-                "",
-                System.Text.RegularExpressions.RegexOptions.IgnoreCase,
-                regexTimeout);
-
-            // 7) Tüm <a> taglarına target="_blank" ekle (yeni pencerede açılması için)
-            // Kullanıcı SunEditor'de "Yeni Pencerede Aç" checkbox'ını işaretlemeyi unutursa
-            // otomatik olarak tüm link'ler yeni sekmede açılacak
-            sanitized = System.Text.RegularExpressions.Regex.Replace(
-                sanitized,
-                @"<a\s+([^>]*?)(?:\s+target\s*=\s*[""'][^""']*[""'])?([^>]*?)>",
-                @"<a $1 target=""_blank""$2>",
-                System.Text.RegularExpressions.RegexOptions.IgnoreCase,
-                regexTimeout);
-
-            _logger.LogDebug("HTML sanitized. Original length: {OriginalLength}, Sanitized length: {SanitizedLength}",
-                html.Length, sanitized.Length);
-
-            return sanitized;
-        }
-        catch (System.Text.RegularExpressions.RegexMatchTimeoutException ex)
-        {
-            _logger.LogWarning(ex, "Regex timeout during HTML sanitization (possible ReDoS attack). Input length: {Length}", html.Length);
-            // Timeout durumunda boş string dön (güvenli taraf)
-            return string.Empty;
-        }
-    }
 
     /// <summary>
     /// DEBIS grup güvenlik kontrolü - Sadece BCC kategorisinde kullanılabilir

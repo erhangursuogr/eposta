@@ -61,8 +61,8 @@ export class EmailGroupList implements OnInit {
   // Filter options
   grupTipleri = [
     { value: 'ALL', label: 'Tüm Tipler' },
-    { value: 'NORMAL', label: 'Standart Grup' },
-    { value: 'STATIK', label: 'Dosyadan Yüklenen' },
+    { value: 'MANUEL', label: 'Manuel Liste' },
+    { value: 'DOSYA', label: 'Dosyadan Yüklenen' },
     { value: 'DINAMIK', label: 'Dinamik View' },
     { value: 'DEBIS', label: 'Debis Listeci' }
   ];

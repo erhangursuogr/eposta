@@ -239,12 +239,12 @@ mat-error {
 }
 
 /* Seçili kartlarda tip rengine göre border ve background */
-.group-card.selected:has(.type-normal) {
+.group-card.selected:has(.type-manuel) {
   border-color: #1565c0 !important;
   background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%) !important;
 }
 
-.group-card.selected:has(.type-statik) {
+.group-card.selected:has(.type-dosya) {
   border-color: #2e7d32 !important;
   background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%) !important;
 }
@@ -278,11 +278,11 @@ mat-error {
 }
 
 /* Grup tiplerine göre icon renkleri */
-.group-card:has(.type-normal) .group-icon {
+.group-card:has(.type-manuel) .group-icon {
   color: #1565c0;
 }
 
-.group-card:has(.type-statik) .group-icon {
+.group-card:has(.type-dosya) .group-icon {
   color: #2e7d32;
 }
 
@@ -347,15 +347,15 @@ mat-chip.type-chip {
   transition: all 0.2s ease;
 }
 
-/* NORMAL - Mavi */
-.type-chip.type-normal {
+/* MANUEL - Mavi */
+.type-chip.type-manuel {
   background: #e3f2fd !important;
   color: #1565c0 !important;
   border-color: #1565c0 !important;
 }
 
-/* STATIK - Yeşil */
-.type-chip.type-statik {
+/* DOSYA - Yeşil */
+.type-chip.type-dosya {
   background: #e8f5e9 !important;
   color: #2e7d32 !important;
   border-color: #2e7d32 !important;

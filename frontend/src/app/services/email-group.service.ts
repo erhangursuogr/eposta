@@ -139,9 +139,9 @@ export class EmailGroupService {
    */
   getGrupTipiText(grupTipi: string): string {
     switch (grupTipi) {
-      case 'NORMAL':
-        return 'Standart Grup';
-      case 'STATIK':
+      case 'MANUEL':
+        return 'Manuel Liste';
+      case 'DOSYA':
         return 'Dosyadan Yüklenen';
       case 'DINAMIK':
         return 'Dinamik View';
@@ -157,9 +157,9 @@ export class EmailGroupService {
    */
   getGrupTipiBadge(grupTipi: string): string {
     switch (grupTipi) {
-      case 'NORMAL':
+      case 'MANUEL':
         return 'status-chip status-primary';
-      case 'STATIK':
+      case 'DOSYA':
         return 'status-chip status-warning';
       case 'DINAMIK':
         return 'status-chip status-active';

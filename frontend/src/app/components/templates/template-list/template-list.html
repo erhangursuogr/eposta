@@ -89,6 +89,13 @@
                   {{ template.aktif === 'Y' ? 'Aktif' : 'Pasif' }}
                 </mat-chip>
               </div>
+              <button mat-mini-fab color="accent"
+                      class="action-btn"
+                      (click)="previewTemplate(template)"
+                      matTooltip="Önizle"
+                      matTooltipPosition="above">
+                <mat-icon>visibility</mat-icon>
+              </button>
             </div>
           </mat-card-header>
 

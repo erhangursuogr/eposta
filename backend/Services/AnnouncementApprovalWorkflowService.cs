@@ -477,6 +477,13 @@ public class AnnouncementApprovalWorkflowService : IAnnouncementApprovalWorkflow
             if (koordinator == null || !RolKodu.CanFirstApprove(koordinator.Rol?.RolKodu))
                 return ResponseModel.ErrorResult("Kontrolör onay yetkisi bulunamadı", 403);
 
+            // GÜVENLİK: Koordinatörün aktif olduğunu kontrol et
+            if (koordinator.Aktif != "Y")
+            {
+                _logger.LogWarning("Inactive coordinator {KoordinatorId} attempted to approve announcement {AnnouncementId}", koordinatorId, id);
+                return ResponseModel.ErrorResult("Hesabınız deaktif durumda. Sistem yöneticisiyle iletişime geçin.", 403);
+            }
+
             // Manager yetkisini kontrol et
             var manager = await _context.Kullanicilar
                 .Include(k => k.Rol)
@@ -484,6 +491,13 @@ public class AnnouncementApprovalWorkflowService : IAnnouncementApprovalWorkflow
 
             if (manager == null || !RolKodu.CanFinalApprove(manager.Rol?.RolKodu))
                 return ResponseModel.ErrorResult("Seçilen kullanıcı manager rolüne sahip değil", 400);
+
+            // GÜVENLİK: Seçilen manager'ın aktif olduğunu kontrol et
+            if (manager.Aktif != "Y")
+            {
+                _logger.LogWarning("Attempted to assign inactive manager {ManagerId} to announcement {AnnouncementId}", managerId, id);
+                return ResponseModel.ErrorResult("Seçilen onaylayıcı deaktif durumda. Farklı bir onaylayıcı seçin.", 400);
+            }
 
             // KRİTİK: Transaction ile atomik durum güncellemesi (race condition önlemi)
             // İki koordinatör aynı anda onaylayamaz
@@ -562,6 +576,13 @@ public class AnnouncementApprovalWorkflowService : IAnnouncementApprovalWorkflow
             if (koordinator == null || !RolKodu.CanFirstApprove(koordinator.Rol?.RolKodu))
                 return ResponseModel.ErrorResult("Kontrolör reddetme yetkisi bulunamadı", 403);
 
+            // GÜVENLİK: Koordinatörün aktif olduğunu kontrol et
+            if (koordinator.Aktif != "Y")
+            {
+                _logger.LogWarning("Inactive coordinator {KoordinatorId} attempted to reject announcement {AnnouncementId}", koordinatorId, id);
+                return ResponseModel.ErrorResult("Hesabınız deaktif durumda. Sistem yöneticisiyle iletişime geçin.", 403);
+            }
+
             var announcement = await _context.EpostaDuyurulari
                 .Include(d => d.OlusturanKullanici)
                 .FirstOrDefaultAsync(d => d.Id == id);
@@ -621,6 +642,13 @@ public class AnnouncementApprovalWorkflowService : IAnnouncementApprovalWorkflow
 
             if (manager == null || !RolKodu.CanFinalApprove(manager.Rol?.RolKodu))
                 return ResponseModel.ErrorResult("Manager onay yetkisi bulunamadı", 403);
+
+            // GÜVENLİK: Manager'ın aktif olduğunu kontrol et
+            if (manager.Aktif != "Y")
+            {
+                _logger.LogWarning("Inactive manager {ManagerId} attempted to approve announcement {AnnouncementId}", managerId, id);
+                return ResponseModel.ErrorResult("Hesabınız deaktif durumda. Sistem yöneticisiyle iletişime geçin.", 403);
+            }
 
             // KRİTİK: Transaction ile atomik durum güncellemesi (race condition önlemi)
             // İki manager aynı anda onaylayamaz
@@ -704,6 +732,13 @@ public class AnnouncementApprovalWorkflowService : IAnnouncementApprovalWorkflow
             if (manager == null || !RolKodu.CanFinalApprove(manager.Rol?.RolKodu))
                 return ResponseModel.ErrorResult("Manager reddetme yetkisi bulunamadı", 403);
 
+            // GÜVENLİK: Manager'ın aktif olduğunu kontrol et
+            if (manager.Aktif != "Y")
+            {
+                _logger.LogWarning("Inactive manager {ManagerId} attempted to reject announcement {AnnouncementId}", managerId, id);
+                return ResponseModel.ErrorResult("Hesabınız deaktif durumda. Sistem yöneticisiyle iletişime geçin.", 403);
+            }
+
             var announcement = await _context.EpostaDuyurulari
                 .Include(d => d.OlusturanKullanici)
                 .FirstOrDefaultAsync(d => d.Id == id);
@@ -763,6 +798,13 @@ public class AnnouncementApprovalWorkflowService : IAnnouncementApprovalWorkflow
 
             if (manager == null || !RolKodu.CanFinalApprove(manager.Rol?.RolKodu))
                 return ResponseModel.ErrorResult("Manager onay yetkisi bulunamadı", 403);
+
+            // GÜVENLİK: Manager'ın aktif olduğunu kontrol et
+            if (manager.Aktif != "Y")
+            {
+                _logger.LogWarning("Inactive manager {ManagerId} attempted to approve and send announcement {AnnouncementId}", managerId, id);
+                return ResponseModel.ErrorResult("Hesabınız deaktif durumda. Sistem yöneticisiyle iletişime geçin.", 403);
+            }
 
             var announcement = await _context.EpostaDuyurulari
                 .Include(d => d.Alicilar)

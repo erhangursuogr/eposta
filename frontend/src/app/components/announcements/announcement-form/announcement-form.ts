@@ -107,6 +107,7 @@ export class AnnouncementForm implements OnInit, AfterViewInit, OnDestroy {
   isEditMode = signal<boolean>(false);
   announcementId?: number;
   sessionId: string = ''; // Upload session ID (backend'den gelecek)
+  sessionIdReady = signal<boolean>(false); // GÜVENLİK: SessionID hazır mı? (race condition önlemi)
   announcement = signal<any>(null); // Duyuru bilgisi (red notları için)
   announcementStatus = signal<AnnouncementStatus | null>(null); // Duyuru durumu
   approvalConfirmed = signal<boolean>(false); // ADMIN/MANAGER için onay checkbox
@@ -397,6 +398,15 @@ export class AnnouncementForm implements OnInit, AfterViewInit, OnDestroy {
 
   // File upload (delegated to FileManagerService)
   onFileSelected(event: any): void {
+    // GÜVENLİK: SessionID hazır değilse dosya yüklemeyi engelle (race condition önlemi)
+    if (!this.sessionIdReady()) {
+      this.toastr.warning('Dosya yükleme hazırlanıyor, lütfen birkaç saniye bekleyin');
+      // Input'u temizle ki kullanıcı tekrar denesin
+      if (event.target) {
+        event.target.value = '';
+      }
+      return;
+    }
     this.fileManager.onFileSelected(event, this.announcementId, this.sessionId);
   }
 
@@ -589,7 +599,7 @@ export class AnnouncementForm implements OnInit, AfterViewInit, OnDestroy {
       title: 'Test E-postası Gönder',
       input: 'email',
       inputLabel: 'E-posta Adresi',
-      inputPlaceholder: 'test@deu.edu.tr',
+      inputPlaceholder: '@deu.edu.tr',
       showCancelButton: true,
       confirmButtonText: 'Gönder',
       cancelButtonText: 'İptal',
@@ -618,9 +628,9 @@ export class AnnouncementForm implements OnInit, AfterViewInit, OnDestroy {
 
 getIconName(grupTipi: string): string {
   const iconMap: { [key: string]: string } = {
-    STATIK: 'group',
+    DOSYA: 'group',
     DINAMIK: 'sync',
-    NORMAL: 'view_list',
+    MANUEL: 'view_list',
     DEBIS: 'email',
   };
   // Eşleşme yoksa varsayılan bir ikon döner
@@ -762,18 +772,25 @@ private loadTemplate(templateId: number): void {
  * Format: {userId}_{guid}
  */
 private generateSecureSessionId(): void {
+  this.sessionIdReady.set(false); // Reset state
   this.http.get<ApiResponse<string>>(`${environment.apiUrl}/api/files/generate-session`)
     .pipe(takeUntilDestroyed(this.destroyRef))
     .subscribe({
       next: (response) => {
         if (response.success && response.data) {
           this.sessionId = response.data;
+          this.sessionIdReady.set(true); // GÜVENLİK: SessionID hazır
+        } else {
+          // Backend başarısız cevap verdi, fallback kullan
+          this.sessionId = 'session-' + Date.now() + '-' + Math.random().toString(36).substring(2, 15);
+          this.sessionIdReady.set(true);
         }
       },
       error: (err) => {
         console.error('Session ID generation failed', err);
         // Fallback: Client-side generate (eski yöntem)
         this.sessionId = 'session-' + Date.now() + '-' + Math.random().toString(36).substring(2, 15);
+        this.sessionIdReady.set(true); // Fallback ile de hazır
       }
     });
 }
@@ -791,6 +808,13 @@ onDragLeave(event: DragEvent): void {
 }
 
 onDrop(event: DragEvent): void {
+  // GÜVENLİK: SessionID hazır değilse dosya yüklemeyi engelle (race condition önlemi)
+  if (!this.sessionIdReady()) {
+    event.preventDefault();
+    this.toastr.warning('Dosya yükleme hazırlanıyor, lütfen birkaç saniye bekleyin');
+    this.fileManager.isDraggingOver.set(false);
+    return;
+  }
   this.fileManager.onDrop(event, this.announcementId, this.sessionId);
 }
 

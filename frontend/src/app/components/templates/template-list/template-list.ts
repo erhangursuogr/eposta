@@ -161,6 +161,37 @@ export class TemplateListComponent implements OnInit {
     this.router.navigate(['/duyuru-olustur'], { queryParams: { templateId: id } });
   }
 
+  previewTemplate(template: Template): void {
+    Swal.fire({
+      title: template.sablonAdi,
+      html: `
+        <div style="text-align: left; padding: 0 24px;">
+          ${template.konuSablonu ? `
+            <div style="margin-bottom: 20px;">
+              <strong style="color: var(--text-secondary);">Konu:</strong>
+              <p style="margin: 8px 0; padding: 12px; background: var(--bg-card); border-radius: 8px; border-left: 3px solid var(--primary);">
+                ${template.konuSablonu}
+              </p>
+            </div>
+          ` : ''}
+          <div>
+            <strong style="color: var(--text-secondary);">İçerik:</strong>
+            <div style="margin-top: 8px; padding: 16px; background: var(--bg-card); border-radius: 8px; max-height: 400px; overflow-y: auto; border: 1px solid var(--border);">
+              ${template.icerikSablonu}
+            </div>
+          </div>
+        </div>
+      `,
+      width: '800px',
+      showCloseButton: true,
+      showConfirmButton: false,
+      customClass: {
+        popup: 'template-preview-popup',
+        htmlContainer: 'template-preview-content'
+      }
+    });
+  }
+
   toggleActive(template: Template): void {
     const action = template.aktif === 'Y' ? 'pasif' : 'aktif';
     const service$ = template.aktif === 'Y'

@@ -49,8 +49,8 @@
           </mat-form-field>
         </form>
 
-        <!-- NORMAL Grup Formu -->
-        @if (selectedType() === 'NORMAL') {
+        <!-- MANUEL Grup Formu -->
+        @if (selectedType() === 'MANUEL') {
           <div class="normal-form">
             <h4>Üye Ekle:</h4>
             <div class="add-member-form">
@@ -91,8 +91,8 @@
           </div>
         }
 
-        <!-- STATIK Grup Formu -->
-        @if (selectedType() === 'STATIK') {
+        <!-- DOSYA Grup Formu -->
+        @if (selectedType() === 'DOSYA') {
           <div class="statik-form">
             <h4>Dosya Yükle:</h4>
             <input type="file" #fileInput (change)="onFileSelected($event)" accept=".xlsx,.xls,.csv,.txt" hidden>

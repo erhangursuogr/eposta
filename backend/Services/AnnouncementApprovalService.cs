@@ -716,39 +716,15 @@ public class AnnouncementApprovalService : IAnnouncementApprovalService
                         var gonderimDurumu = sent ? "GONDERILDI" : "BASARISIZ";
                         var hataMesaji = sent ? null : "Email servisi gönderim hatası";
 
-                        // Log each recipient
+                        // Log each recipient (artık tüm alıcılar BCC - KVKK/GDPR uyumu)
                         var sendLogs = new List<EpostaDuyuruGonderimLog>();
 
-                        // TO Recipients
-                        foreach (var email in request.ToRecipients)
-                        {
-                            sendLogs.Add(new EpostaDuyuruGonderimLog
-                            {
-                                DuyuruId = id,
-                                AliciEmail = email,
-                                AliciKategorisi = "TO",
-                                GonderimDurumu = sent ? "BASARILI" : "BASARISIZ",
-                                HataMesaji = hataMesaji,
-                                GonderimTarihi = gonderimTarihi
-                            });
-                        }
+                        // Tüm alıcıları BCC olarak logla
+                        var allRecipients = request.ToRecipients
+                            .Concat(request.CcRecipients)
+                            .Concat(request.BccRecipients);
 
-                        // CC Recipients
-                        foreach (var email in request.CcRecipients)
-                        {
-                            sendLogs.Add(new EpostaDuyuruGonderimLog
-                            {
-                                DuyuruId = id,
-                                AliciEmail = email,
-                                AliciKategorisi = "CC",
-                                GonderimDurumu = sent ? "BASARILI" : "BASARISIZ",
-                                HataMesaji = hataMesaji,
-                                GonderimTarihi = gonderimTarihi
-                            });
-                        }
-
-                        // BCC Recipients
-                        foreach (var email in request.BccRecipients)
+                        foreach (var email in allRecipients)
                         {
                             sendLogs.Add(new EpostaDuyuruGonderimLog
                             {
@@ -908,20 +884,8 @@ public class AnnouncementApprovalService : IAnnouncementApprovalService
 
     private static void AddByCategory(string category, string email, HashSet<string> toSet, HashSet<string> ccSet, HashSet<string> bccSet)
     {
-        switch ((category ?? "BCC").ToUpperInvariant())
-        {
-            case "TO":
-                toSet.Add(email);
-                break;
-
-            case "CC":
-                ccSet.Add(email);
-                break;
-
-            default:
-                bccSet.Add(email);
-                break;
-        }
+        // KVKK/GDPR uyumu: Tüm alıcılar BCC olarak gönderilir
+        bccSet.Add(email);
     }
 
     #endregion Helper Methods

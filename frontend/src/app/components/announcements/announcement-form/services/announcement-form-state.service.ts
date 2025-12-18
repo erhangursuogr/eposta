@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ToastrService } from 'ngx-toastr';
 import { EmailGroupService, EmailGroup } from '../../../../services/email-group.service';
+import { AnnouncementFileManagerService } from './announcement-file-manager.service';
 
 /**
  * Duyuru Formu Durum Yönetim Servisi
@@ -21,6 +22,7 @@ export class AnnouncementFormStateService {
   private emailGroupService = inject(EmailGroupService);
   private toastr = inject(ToastrService);
   private destroyRef = inject(DestroyRef);
+  private fileManager = inject(AnnouncementFileManagerService);
 
   // Form
   announcementForm!: FormGroup;
@@ -141,6 +143,7 @@ export class AnnouncementFormStateService {
     }
     this.selectedGroups.set([]);
     this.manualEmails.set([]);
+    this.fileManager.clearUploadedFiles(); // Dosyaları temizle
   }
 
   /**

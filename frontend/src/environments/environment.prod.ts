@@ -44,7 +44,7 @@ export const environment = {
   keycloakLogoutUrl: 'https://sso.deu.edu.tr:8443/realms/dokuzeylul/protocol/openid-connect/logout?post_logout_redirect_uri=https://kurumsalduyuru.deu.edu.tr/login' as string,
 
   // Application info
-  appName: 'DEÜ Duyuru Yönetim Sistemi',
+  appName: 'DEÜ Kurumsal Duyuru Yönetim Sistemi',
   appVersion: '1.0.0',
   copyrightYear: new Date().getFullYear(),
   institutionName: 'Dokuz Eylül Üniversitesi'

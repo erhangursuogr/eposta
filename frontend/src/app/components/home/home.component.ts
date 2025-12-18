@@ -175,7 +175,10 @@ export class HomeComponent implements OnInit {
 
   getGroupTypeLabel(type: string): string {
     switch (type) {
-      case 'STATIK': return 'Statik';
+      case 'MANUEL':
+        return 'Manuel';
+      case 'DOSYA':
+        return 'Dosya';
       case 'DINAMIK': return 'Dinamik';
       case 'DEBIS': return 'Debis';
       default: return type;
@@ -184,7 +187,10 @@ export class HomeComponent implements OnInit {
 
   getGroupTypeColor(type: string): string {
     switch (type) {
-      case 'STATIK': return 'primary';
+      case 'MANUEL':
+        return 'default';
+      case 'DOSYA':
+        return 'primary';
       case 'DINAMIK': return 'accent';
       case 'DEBIS': return 'warn';
       default: return 'default';

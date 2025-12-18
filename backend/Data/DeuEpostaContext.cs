@@ -124,6 +124,7 @@ public class DeuEpostaContext : DbContext
         entity.Property(e => e.Unvan).HasMaxLength(100).IsUnicode(false).HasColumnName("UNVAN");
         entity.Property(e => e.GorevYeri).HasColumnName("GOREV_YERI");
         entity.Property(e => e.GorevYeriAdi).HasMaxLength(200).IsUnicode(false).HasColumnName("GOREV_YERI_ADI");
+        entity.Property(e => e.CepTel).HasMaxLength(10).IsUnicode(false).HasColumnName("CEPTEL");
         entity.Property(e => e.RolId).HasColumnName("ROL_ID");
         // entity.Property(e => e.ParolaHash).HasMaxLength(500).IsUnicode(false).HasColumnName("PAROLA_HASH"); // REMOVED - LDAP only
         entity.Property(e => e.Aktif)
@@ -162,7 +163,7 @@ public class DeuEpostaContext : DbContext
         // DEBIS gruplar için listeci email adresi
         entity.Property(e => e.ListeciEmail).HasMaxLength(200).IsUnicode(false).HasColumnName("LISTECI_EMAIL");
 
-        // Grup üye sayısı (STATIK: trigger günceller, DINAMIK: backend hesaplar)
+        // Grup üye sayısı (DOSYA: trigger günceller, DINAMIK: backend hesaplar)
         entity.Property(e => e.UyeSayisi).HasDefaultValue(0).HasColumnName("UYE_SAYISI");
 
         entity.Property(e => e.Aktif)

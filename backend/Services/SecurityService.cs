@@ -1,6 +1,7 @@
 using DeuEposta.Data;
 using DeuEposta.Models;
 using DeuEposta.Models.Enums;
+using Ganss.Xss;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
@@ -30,6 +31,19 @@ public interface ISecurityService
     void RecordFailedLoginAttempt(string email, string ip, string userAgent);
 
     void RecordSuccessfulLogin(string email, string ip);
+
+    /// <summary>
+    /// HTML içeriğini XSS saldırılarına karşı sanitize eder.
+    /// Script, iframe, object, embed gibi tehlikeli elementleri ve event handler'ları temizler.
+    /// Email içeriği için güvenli HTML döndürür.
+    /// </summary>
+    string SanitizeHtmlContent(string htmlContent);
+
+    /// <summary>
+    /// Email içeriğini hem kontrol eder hem de sanitize eder.
+    /// Tehlikeli pattern tespit edilirse null döner, değilse sanitize edilmiş içerik döner.
+    /// </summary>
+    Task<(bool IsSafe, string? SanitizedContent)> ValidateAndSanitizeEmailContentAsync(string content);
 }
 
 public class SecurityValidationResult
@@ -409,6 +423,158 @@ public class SecurityService : ISecurityService
 
         // Remove the failed attempts record on successful login
         _loginAttempts.TryRemove(key, out _);
+    }
+
+    /// <summary>
+    /// HTML içeriğini XSS saldırılarına karşı sanitize eder.
+    /// Email için güvenli HTML tagları ve attribute'ları korur.
+    /// </summary>
+    public string SanitizeHtmlContent(string htmlContent)
+    {
+        if (string.IsNullOrEmpty(htmlContent))
+            return htmlContent;
+
+        try
+        {
+            var sanitizer = CreateEmailSanitizer();
+            var sanitizedHtml = sanitizer.Sanitize(htmlContent);
+
+            _logger.LogDebug("HTML content sanitized. Original length: {OriginalLength}, Sanitized length: {SanitizedLength}",
+                htmlContent.Length, sanitizedHtml.Length);
+
+            return sanitizedHtml;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sanitizing HTML content, returning empty string for safety");
+            return string.Empty;
+        }
+    }
+
+    /// <summary>
+    /// Email içeriğini kontrol eder ve sanitize eder.
+    /// Tehlikeli pattern varsa (false, null), güvenliyse (true, sanitizedContent) döner.
+    /// </summary>
+    public async Task<(bool IsSafe, string? SanitizedContent)> ValidateAndSanitizeEmailContentAsync(string content)
+    {
+        if (string.IsNullOrEmpty(content))
+            return (true, content);
+
+        // Önce tehlikeli patternleri kontrol et
+        if (!await IsContentSafeAsync(content))
+        {
+            _logger.LogWarning("Email content failed safety check, rejecting");
+            return (false, null);
+        }
+
+        // Sanitize et
+        var sanitizedContent = SanitizeHtmlContent(content);
+
+        // Sanitize sonrası tekrar kontrol (paranoid mode)
+        if (!await IsContentSafeAsync(sanitizedContent))
+        {
+            _logger.LogWarning("Sanitized content still contains dangerous patterns, rejecting");
+            return (false, null);
+        }
+
+        return (true, sanitizedContent);
+    }
+
+    /// <summary>
+    /// Email içeriği için özelleştirilmiş HtmlSanitizer oluşturur.
+    /// Güvenli HTML tagları ve attribute'ları izin verir.
+    /// </summary>
+    private static HtmlSanitizer CreateEmailSanitizer()
+    {
+        var sanitizer = new HtmlSanitizer();
+
+        // Varsayılan ayarları temizle ve email için güvenli olanları ekle
+        sanitizer.AllowedTags.Clear();
+        sanitizer.AllowedAttributes.Clear();
+        sanitizer.AllowedCssProperties.Clear();
+
+        // Email için güvenli HTML tagları
+        var allowedTags = new[]
+        {
+            // Yapısal
+            "div", "span", "p", "br", "hr",
+            // Başlıklar
+            "h1", "h2", "h3", "h4", "h5", "h6",
+            // Listeler
+            "ul", "ol", "li",
+            // Tablo
+            "table", "thead", "tbody", "tfoot", "tr", "th", "td", "caption", "colgroup", "col",
+            // Metin formatlama
+            "b", "strong", "i", "em", "u", "s", "strike", "del", "ins", "sub", "sup",
+            "blockquote", "pre", "code", "q", "cite", "abbr", "address",
+            // Link ve resim
+            "a", "img",
+            // Diğer
+            "figure", "figcaption", "center", "font"
+        };
+
+        foreach (var tag in allowedTags)
+        {
+            sanitizer.AllowedTags.Add(tag);
+        }
+
+        // Güvenli attribute'lar
+        var allowedAttributes = new[]
+        {
+            "class", "id", "style",
+            "href", "target", "title", "rel",  // Link
+            "src", "alt", "width", "height",   // Image
+            "align", "valign", "bgcolor", "border", "cellpadding", "cellspacing",  // Table
+            "colspan", "rowspan", "scope",
+            "color", "size", "face"  // Font (legacy)
+        };
+
+        foreach (var attr in allowedAttributes)
+        {
+            sanitizer.AllowedAttributes.Add(attr);
+        }
+
+        // Güvenli CSS özellikleri
+        var allowedCss = new[]
+        {
+            "color", "background-color", "background",
+            "font-family", "font-size", "font-weight", "font-style",
+            "text-align", "text-decoration", "text-indent", "line-height",
+            "margin", "margin-top", "margin-bottom", "margin-left", "margin-right",
+            "padding", "padding-top", "padding-bottom", "padding-left", "padding-right",
+            "border", "border-color", "border-width", "border-style",
+            "border-top", "border-bottom", "border-left", "border-right",
+            "border-collapse", "border-spacing",
+            "width", "height", "max-width", "max-height", "min-width", "min-height",
+            "display", "vertical-align", "float", "clear",
+            "list-style", "list-style-type"
+        };
+
+        foreach (var css in allowedCss)
+        {
+            sanitizer.AllowedCssProperties.Add(css);
+        }
+
+        // URL scheme'leri (sadece güvenli protokoller)
+        sanitizer.AllowedSchemes.Clear();
+        sanitizer.AllowedSchemes.Add("http");
+        sanitizer.AllowedSchemes.Add("https");
+        sanitizer.AllowedSchemes.Add("mailto");
+
+        // Link'ler için target="_blank" zorunlu rel="noopener noreferrer" ekle
+        sanitizer.PostProcessNode += (sender, args) =>
+        {
+            if (args.Node is HtmlAgilityPack.HtmlNode htmlNode && htmlNode.Name == "a")
+            {
+                var target = htmlNode.GetAttributeValue("target", "");
+                if (target == "_blank")
+                {
+                    htmlNode.SetAttributeValue("rel", "noopener noreferrer");
+                }
+            }
+        };
+
+        return sanitizer;
     }
 
     private class LoginAttemptInfo

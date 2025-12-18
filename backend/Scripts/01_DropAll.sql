@@ -53,11 +53,6 @@ DROP TRIGGER TRG_ALICI_SAYISI_STMT;
 DROP TRIGGER TRG_ALICI_SAYISI_ROW;
 DROP PACKAGE PKG_ALICI_SAYISI;
 
--- Grup üye sayısı trigger'ları
-DROP TRIGGER TRG_GRUP_UYE_SAYISI_STMT;
-DROP TRIGGER TRG_GRUP_UYE_SAYISI_ROW;
-DROP PACKAGE PKG_GRUP_UYE_SAYISI;
-
 -- =============================================
 -- 4. TABLOLARI SİL (Foreign Key Sırasına Göre)
 -- =============================================

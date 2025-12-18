@@ -88,8 +88,8 @@ export class EmailGroupEditDialog implements OnInit {
             listeciEmail: group.listeciEmail || ''
           });
 
-          // NORMAL/STATIK gruplar için üyeleri yükle
-          if (group.grupTipi === 'NORMAL' || group.grupTipi === 'STATIK') {
+          // MANUEL/DOSYA gruplar için üyeleri yükle
+          if (group.grupTipi === 'MANUEL' || group.grupTipi === 'DOSYA') {
             this.loadMembers();
           }
         }

@@ -28,15 +28,17 @@ public class EmailService : IEmailService
     private readonly IConfiguration _configuration;
     private readonly IEmailCategoryService _emailCategoryService;
     private readonly IAuditLogService _auditLog;
+    private readonly ISecurityService _securityService;
     private readonly AsyncRetryPolicy _retryPolicy;
 
-    public EmailService(DeuEpostaContext context, ILogger<EmailService> logger, IConfiguration configuration, IEmailCategoryService emailCategoryService, IAuditLogService auditLog)
+    public EmailService(DeuEpostaContext context, ILogger<EmailService> logger, IConfiguration configuration, IEmailCategoryService emailCategoryService, IAuditLogService auditLog, ISecurityService securityService)
     {
         _context = context;
         _logger = logger;
         _configuration = configuration;
         _emailCategoryService = emailCategoryService;
         _auditLog = auditLog;
+        _securityService = securityService;
 
         // Polly retry policy: 3 attempts with exponential backoff
         _retryPolicy = Policy
@@ -111,11 +113,16 @@ public class EmailService : IEmailService
                 throw new UnauthorizedAccessException($"Email gönderme yetkisi olmayan adres: {emailConfig.FromEmail}. Bu olay loglandı.");
             }
 
+            // GÜVENLİK: HTML içeriğini XSS'e karşı sanitize et
+            var sanitizedBody = request.IsHtml
+                ? _securityService.SanitizeHtmlContent(request.Body)
+                : request.Body;
+
             using var mailMessage = new MailMessage
             {
                 From = new MailAddress(emailConfig.FromEmail, emailConfig.FromName),
                 Subject = request.Subject,
-                Body = request.Body,
+                Body = sanitizedBody,
                 IsBodyHtml = request.IsHtml
             };
 
@@ -204,8 +211,8 @@ public class EmailService : IEmailService
 
         return group.GrupTipi switch
         {
-            "NORMAL" => GetNormalGroupRecipients(group),
-            "STATIK" or "STATIC" => await GetStaticGroupRecipientsAsync(group),
+            "MANUEL" => GetNormalGroupRecipients(group),
+            "DOSYA" => await GetStaticGroupRecipientsAsync(group),
             "DINAMIK" or "DYNAMIC" => await GetDynamicGroupRecipientsAsync(group),
             "DEBIS" => GetDebisGroupRecipients(group, category),
             _ => new List<string>()

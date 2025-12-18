@@ -47,12 +47,12 @@ public class Oracle11gService : IOracle11gService
                     UNVANI AS UNVAN,
                     TC_KIMLIK_NO,
                     GOREV_YERI,
-                    GOREV_YERI_ADI
+                    GOREV_YERI_ADI,
+                    CEPTEL,
+                    DURUM
                 FROM V_PERSONEL_EMAIL_BILGI
-                WHERE UPPER(EMAIL) = UPPER(:email)
-                AND DURUM = 0
-                AND KURUM NOT IN (888, 999)
-                AND ARSIV_YIL < 3000
+                WHERE UPPER(EMAIL) = UPPER(:email)                
+                AND KURUM <> 999                
                 AND ROWNUM = 1";
 
             using var command1 = new OracleCommand(sql1, connection);
@@ -62,6 +62,7 @@ public class Oracle11gService : IOracle11gService
             using var reader1 = await command1.ExecuteReaderAsync();
             if (await reader1.ReadAsync())
             {
+                var rawPhone = reader1.IsDBNull(7) ? null : reader1.GetString(7);
                 var personel = new PersonelDto
                 {
                     AdSoyad = reader1.IsDBNull(0) ? null : reader1.GetString(0),
@@ -70,7 +71,9 @@ public class Oracle11gService : IOracle11gService
                     Unvan = reader1.IsDBNull(3) ? null : reader1.GetString(3),
                     TcKimlikNo = reader1.IsDBNull(4) ? null : reader1.GetString(4),
                     GorevYeri = reader1.IsDBNull(5) ? null : (int?)reader1.GetInt32(5),
-                    GorevYeriAdi = reader1.IsDBNull(6) ? null : reader1.GetString(6)
+                    GorevYeriAdi = reader1.IsDBNull(6) ? null : reader1.GetString(6),
+                    CepTel = NormalizePhoneNumber(rawPhone),
+                    Durum = reader1.IsDBNull(8) ? null : (int?)reader1.GetInt32(8)
                 };
 
                 _logger.LogInformation("Personel found by email: {Email} -> {AdSoyad}", email, personel.AdSoyad);
@@ -115,12 +118,12 @@ public class Oracle11gService : IOracle11gService
                     UNVANI AS UNVAN,
                     TC_KIMLIK_NO,
                     GOREV_YERI,
-                    GOREV_YERI_ADI
+                    GOREV_YERI_ADI,
+                    CEPTEL,
+                    DURUM
                 FROM V_PERSONEL_EMAIL_BILGI
-                WHERE TC_KIMLIK_NO = :tcKimlikNo
-                AND DURUM = 0
-                AND KURUM NOT IN (888, 999)
-                AND ARSIV_YIL < 3000
+                WHERE TC_KIMLIK_NO = :tcKimlikNo                
+                AND KURUM NOT <> 999                
                 AND ROWNUM = 1";
 
             using var command3 = new OracleCommand(sql3, connection);
@@ -130,6 +133,7 @@ public class Oracle11gService : IOracle11gService
             using var reader3 = await command3.ExecuteReaderAsync();
             if (await reader3.ReadAsync())
             {
+                var rawPhone3 = reader3.IsDBNull(7) ? null : reader3.GetString(7);
                 var personel = new PersonelDto
                 {
                     AdSoyad = reader3.IsDBNull(0) ? null : reader3.GetString(0),
@@ -138,7 +142,9 @@ public class Oracle11gService : IOracle11gService
                     Unvan = reader3.IsDBNull(3) ? null : reader3.GetString(3),
                     TcKimlikNo = reader3.IsDBNull(4) ? null : reader3.GetString(4),
                     GorevYeri = reader3.IsDBNull(5) ? null : (int?)reader3.GetInt32(5),
-                    GorevYeriAdi = reader3.IsDBNull(6) ? null : reader3.GetString(6)
+                    GorevYeriAdi = reader3.IsDBNull(6) ? null : reader3.GetString(6),
+                    CepTel = NormalizePhoneNumber(rawPhone3),
+                    Durum = reader3.IsDBNull(8) ? null : (int?)reader3.GetInt32(8)
                 };
 
                 // SECURITY: TC Kimlik No is PII - do not log
@@ -155,6 +161,39 @@ public class Oracle11gService : IOracle11gService
             return null;
         }
     }
+
+    /// <summary>
+    /// Cep telefonu numarasını normalize eder
+    /// Örnekler: "05551234567" -> "5551234567", "555 123 45 67" -> "5551234567"
+    /// </summary>
+    private string? NormalizePhoneNumber(string? phoneNumber)
+    {
+        if (string.IsNullOrWhiteSpace(phoneNumber))
+            return null;
+
+        // Boşlukları, tire ve parantezleri temizle
+        var cleaned = phoneNumber.Replace(" ", "").Replace("-", "").Replace("(", "").Replace(")", "").Trim();
+
+        // Sadece rakamları al
+        cleaned = new string(cleaned.Where(char.IsDigit).ToArray());
+
+        // Boş ise null dön
+        if (string.IsNullOrEmpty(cleaned))
+            return null;
+
+        // Başında 0 varsa kaldır (05551234567 -> 5551234567)
+        if (cleaned.StartsWith("0"))
+            cleaned = cleaned.Substring(1);
+
+        // Geçerli uzunluk kontrolü (10 haneli olmalı: 5551234567)
+        if (cleaned.Length != 10)
+        {
+            _logger.LogWarning("Invalid phone number length after normalization: {Phone} (length: {Length})", phoneNumber, cleaned.Length);
+            return null;
+        }
+
+        return cleaned;
+    }
 }
 
 /// <summary>
@@ -169,4 +208,6 @@ public class PersonelDto
     public string? TcKimlikNo { get; set; }
     public int? GorevYeri { get; set; } // Görev yeri kodu (0=Rektörlük, 500=Mühendislik vb.)
     public string? GorevYeriAdi { get; set; } // Görev yeri adı
+    public string? CepTel { get; set; } // Cep telefonu (sadece rakamlar, başında 0 yok: 5551234567)
+    public int ? Durum { get; set; } // Personel durumu (1=pasif, 0=Aktif) 
 }

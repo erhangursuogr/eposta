@@ -63,8 +63,9 @@ export class AuthService {
 
   /**
    * SSO Keycloak callback işleyici
+   * Returns: { success: boolean, errorType?: string, errorMessage?: string }
    */
-  async handleSsoCallback(code: string): Promise<boolean> {
+  async handleSsoCallback(code: string): Promise<{ success: boolean; errorType?: string; errorMessage?: string }> {
     try {
       const response = await firstValueFrom(
         this._http.post<ApiResponse<LoginData>>(
@@ -89,14 +90,47 @@ export class AuthService {
           this._sessionTimeout.startMonitoring();
         }
 
-        return true;
+        // SSO hata flag'ini temizle
+        localStorage.removeItem('sso_error');
+
+        return { success: true };
       }
-      return false;
-    } catch (error) {
+
+      // Backend başarısız yanıt döndürdü (success: false)
+      return this.handleSsoError(response.statusCode, response.message);
+    } catch (error: any) {
       console.error('SSO callback error:', error);
-      return false;
+
+      // HTTP status code'u kontrol et
+      const statusCode = error?.status || error?.error?.statusCode;
+      const errorMessage = error?.error?.message || 'SSO işlemi sırasında bir hata oluştu';
+
+      return this.handleSsoError(statusCode, errorMessage);
     }
   }
+
+  /**
+   * SSO error'ları kategorize eder ve localStorage'a kaydeder (DRY helper)
+   */
+  private handleSsoError(statusCode: number | undefined, defaultMessage: string): { success: false; errorType: string; errorMessage: string } {
+    let errorType = 'SSO_ERROR';
+    let errorMessage = defaultMessage || 'SSO giriş başarısız oldu';
+
+    // Status code'a göre error type ve mesaj belirle
+    if (statusCode === 404) {
+      errorType = 'USER_NOT_FOUND';
+      errorMessage = 'Bu e-posta adresi ile kayıtlı bir kullanıcı bulunamadı. Lütfen sistem yöneticisi ile iletişime geçin.';
+    } else if (statusCode === 403) {
+      errorType = 'USER_INACTIVE';
+      errorMessage = 'Kullanıcı hesabınız aktif değil. Lütfen sistem yöneticisi ile iletişime geçin.';
+    }
+
+    // SSO hata durumunu kaydet (infinite loop önleme)
+    localStorage.setItem('sso_error', JSON.stringify({ type: errorType, message: errorMessage }));
+
+    return { success: false, errorType, errorMessage };
+  }
+
 
   /**
    * Dual-mode logout (AUTH_MODE'a göre)

@@ -98,7 +98,7 @@ export class SidebarComponent {
   private menuConfiguration: MenuSection[] = [
     {
       id: 'announcement',
-      title: 'Duyuru İşlemleri',
+      title: 'Duyuru Yönetimi',
       icon: 'campaign',
       permissions: ['ADMIN', 'MANAGER', 'COORDINATOR', 'EDITOR', 'VIEWER'],
       expanded: false,
@@ -166,7 +166,7 @@ export class SidebarComponent {
     },
     {
       id: 'mailing',
-      title: 'Duyuru Yönetimi',
+      title: 'Duyuru İşlemleri',
       icon: 'mail',
       permissions: ['ADMIN', 'MANAGER', 'COORDINATOR', 'EDITOR', 'VIEWER'],
       expanded: false,
@@ -300,7 +300,7 @@ export class SidebarComponent {
   }
 
   yardim(){
-    // Yardım modal veya sayfası açılabilir
+    window.open('/assets/deu_duyuru_kilavuz.pdf', '_blank');
   }
 
   getRoleName(): string {

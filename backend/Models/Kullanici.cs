@@ -10,6 +10,7 @@ public class Kullanici
     public string? Unvan { get; set; }
     public int? GorevYeri { get; set; } // Görev yeri kodu (0=Rektörlük, 500=Mühendislik vb.) - Oracle 11g'den otomatik çekilir
     public string? GorevYeriAdi { get; set; } // Görev yeri adı - Oracle 11g'den otomatik çekilir
+    public string? CepTel { get; set; } // Cep telefonu (sadece rakamlar, başında 0 yok: 5551234567) - Oracle 11g'den otomatik çekilir
     public int RolId { get; set; }
 
     // public string? ParolaHash { get; set; } // REMOVED - LDAP only authentication

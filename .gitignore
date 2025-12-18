@@ -376,10 +376,10 @@ backend/Data/hangfire/hangfire.db
 
 # Data Protection Keys (encrypted, but should not be in git)
 backend/keys/
-backend/.env
 CLAUDE.md
-backend/.env.example
 frontend/nul
 backend/nul
 nul
-CODE_AUDIT_REPORT.md
+docs/KULLANIM_KILAVUZU_EDITOR.md
+backend/web.config.production
+

@@ -5,6 +5,7 @@ import { ToastrService } from 'ngx-toastr';
 import { AuthService } from './auth.service';
 import { AnnouncementService } from './announcement.service';
 import { SessionTimeoutService } from './session-timeout.service';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -83,17 +84,16 @@ setUser(onComplete?: () => void) {
       // SSO mode: id_token'ı localStorage.clear() öncesi al
       const idToken = mode === '1' ? localStorage.getItem('id_token') : null;
 
-      // Backend logout
-      this._authService.logout().subscribe({
-        next: (response) => {
-          if (response.success) {
-            this._toastr.success('Çıkış yapıldı');
-          }
-        },
-        error: (err) => {
-          console.warn('Backend logout failed:', err);
+      // Backend logout (await ile bekle)
+      try {
+        const response = await firstValueFrom(this._authService.logout());
+        if (response.success) {
+          this._toastr.success('Çıkış yapıldı');
         }
-      });
+      } catch (err) {
+        console.warn('Backend logout failed:', err);
+        // Backend logout hatası olsa bile devam et
+      }
 
       // Clear state
       localStorage.clear();

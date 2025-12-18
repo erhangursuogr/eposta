@@ -1,6 +1,6 @@
 export enum GrupTipi {
-  NORMAL = 'NORMAL',
-  STATIK = 'STATIK',
+  MANUEL = 'MANUEL',
+  DOSYA = 'DOSYA',
   DINAMIK = 'DINAMIK',
   DEBIS = 'DEBIS'
 }

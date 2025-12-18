@@ -106,3 +106,22 @@ mat-stroked-button {
   box-shadow: var(--shadow-md);
   transform: translateY(-2px);
 }
+
+/* ================================
+   SweetAlert2 Template Preview
+   ================================ */
+.template-preview-popup {
+  border-radius: 12px !important;
+}
+
+.template-preview-content {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.template-preview-content strong {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}

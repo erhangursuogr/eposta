@@ -86,7 +86,7 @@ public class EmailGroupService : IEmailGroupService
                 .ToListAsync();
 
             // DTO'ya map et - UyeSayisi database'den okunur
-            // STATIK gruplar: PKG_GRUP_UYE_SAYISI trigger'ı tarafından otomatik güncellenir
+            // DOSYA gruplar: PKG_GRUP_UYE_SAYISI trigger'ı tarafından otomatik güncellenir
             // DINAMIK gruplar: Backend tarafından create/update sırasında hesaplanır
             var groups = groupsRaw.Select(g => new EmailGroupListDto
             {
@@ -200,13 +200,13 @@ public class EmailGroupService : IEmailGroupService
                 group.UyeSayisi = 1;
                 _logger.LogInformation("DEBIS grup üye sayısı: 1 (listeci email)");
             }
-            // NORMAL/STATIK gruplar: İlk oluşturulduğunda 0, üye eklendikçe artacak
+            // MANUEL/DOSYA gruplar: İlk oluşturulduğunda 0, üye eklendikçe artacak
 
             _context.EpostaGruplari.Add(group);
             await _context.SaveChangesAsync();
 
-            // NORMAL/STATIK gruplar için üyeleri ekle (eğer varsa)
-            if ((request.GrupTipi == GrupTipi.NORMAL || request.GrupTipi == GrupTipi.STATIK)
+            // MANUEL/DOSYA gruplar için üyeleri ekle (eğer varsa)
+            if ((request.GrupTipi == GrupTipi.MANUEL || request.GrupTipi == GrupTipi.DOSYA)
                 && request.StatikUyeler != null && request.StatikUyeler.Any())
             {
                 // Performans optimizasyonu: AddRange kullan
@@ -392,8 +392,8 @@ public class EmailGroupService : IEmailGroupService
                     400);
             }
 
-            // Remove all members first (sadece NORMAL/STATIK gruplarda üye var)
-            if (group.GrupTipi == "NORMAL" || group.GrupTipi == "STATIK")
+            // Remove all members first (sadece MANUEL/DOSYA gruplarda üye var)
+            if (group.GrupTipi == "MANUEL" || group.GrupTipi == "DOSYA")
             {
                 var members = await _context.EpostaGrupUyeleri
                     .Where(u => u.GrupId == id)
@@ -581,12 +581,12 @@ public class EmailGroupService : IEmailGroupService
 
             switch (group.GrupTipi)
             {
-                case "NORMAL":
+                case "MANUEL":
                     emails = await _context.EpostaGrupUyeleri
                         .Where(u => u.GrupId == groupId && u.Durum == "AKTIF")
                         .Select(u => u.Email)
                         .ToListAsync();
-                    _logger.LogInformation("Normal group {GroupId}: {Count} emails", groupId, emails.Count);
+                    _logger.LogInformation("Manuel group {GroupId}: {Count} emails", groupId, emails.Count);
                     break;
 
                 case "DEBIS":
@@ -603,11 +603,10 @@ public class EmailGroupService : IEmailGroupService
                     }
                     break;
 
-                case "STATIK":
-                case "STATIC":
-                    // Static groups - get emails from predefined data source
+                case "DOSYA":
+                    // File-based groups - get emails from predefined data source
                     emails = await GetStaticGroupEmailsAsync(groupId, group.ViewAdi, group.FilterKosulu);
-                    _logger.LogInformation("Static group {GroupId}: {Count} emails from view {ViewName}",
+                    _logger.LogInformation("File group {GroupId}: {Count} emails from view {ViewName}",
                         groupId, emails.Count, group.ViewAdi);
                     break;
 
@@ -753,10 +752,10 @@ public class EmailGroupService : IEmailGroupService
             if (group == null)
                 return ResponseDataModel<ImportMembersResult>.ErrorResult("Grup bulunamadı", 404);
 
-            // Grup tipi kontrolü - sadece STATIK gruplar için izin ver
+            // Grup tipi kontrolü - sadece DOSYA gruplar için izin ver
             var grupTipi = GrupTipiExtensions.ParseSafely(group.GrupTipi);
-            if (grupTipi != GrupTipi.STATIK)
-                return ResponseDataModel<ImportMembersResult>.ErrorResult("Sadece statik gruplara dosyadan üye eklenebilir", 400);
+            if (grupTipi != GrupTipi.DOSYA)
+                return ResponseDataModel<ImportMembersResult>.ErrorResult("Sadece dosya gruplarına dosyadan üye eklenebilir", 400);
 
             // Dosya kontrolü
             if (file == null || file.Length == 0)
@@ -1124,7 +1123,7 @@ public class EmailGroupService : IEmailGroupService
 
     /// <summary>
     /// HYBRID APPROACH: Backend'de grup üye sayısını hesaplar ve günceller
-    /// Sadece NORMAL/STATIK gruplarda çağrılmalı (DINAMIK/DEBIS için gerek yok)
+    /// Sadece MANUEL/DOSYA gruplarda çağrılmalı (DINAMIK/DEBIS için gerek yok)
     /// </summary>
     private async Task UpdateGroupMemberCountAsync(int groupId)
     {
@@ -1142,8 +1141,8 @@ public class EmailGroupService : IEmailGroupService
 
             switch (group.GrupTipi)
             {
-                case "NORMAL":
-                case "STATIK":
+                case "MANUEL":
+                case "DOSYA":
                     // AKTIF üyeleri say
                     uyeSayisi = await _context.EpostaGrupUyeleri
                         .CountAsync(u => u.GrupId == groupId && u.Durum == "AKTIF");

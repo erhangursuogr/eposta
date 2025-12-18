@@ -79,8 +79,8 @@
         <mat-divider></mat-divider>
       }
 
-      <!-- Üyeler (NORMAL/STATIK için) -->
-      @if (group()!.grupTipi === 'NORMAL' || group()!.grupTipi === 'STATIK') {
+      <!-- Üyeler (MANUEL/DOSYA için) -->
+      @if (group()!.grupTipi === 'MANUEL' || group()!.grupTipi === 'DOSYA') {
         <div class="members-section">
           <h3>Grup Üyeleri ({{ members().length }})</h3>
           @if (members().length > 0) {

@@ -44,10 +44,11 @@
                 </mat-card-title>
                 <!-- <mat-card-subtitle>{{ announcement.konu }}</mat-card-subtitle> -->
               </div>
-              <button
-                mat-icon-button
-                (click)="viewDetails(announcement)"
-                matTooltip="Detayları Görüntüle">
+              <button mat-mini-fab color="accent"
+                      class="action-btn"
+                      (click)="viewDetails(announcement)"
+                      matTooltip="Önizle"
+                      matTooltipPosition="above">
                 <mat-icon>visibility</mat-icon>
               </button>
             </div>

@@ -12,6 +12,7 @@ Dokuz Eylül Üniversitesi için toplu e-posta duyuru yönetim ve gönderim sist
 
 ### 🔐 Kimlik Doğrulama
 - DEÜ LDAP entegrasyonu
+- DEÜ SSO (Single Sign-On) Keycloak
 - JWT Bearer Token
 - Rol bazlı yetkilendirme (ADMIN, COORDINATOR, MANAGER, EDITOR, VIEWER)
 - Token blacklist (logout)
@@ -49,12 +50,14 @@ Dokuz Eylül Üniversitesi için toplu e-posta duyuru yönetim ve gönderim sist
 - Güvenlik: Path traversal koruması, tip/boyut kontrolü, duplicate check
 
 ### 🔒 Güvenlik
-- Rate limiting
-- SQL Injection/XSS/Path Traversal koruması
+- Rate limiting (Login: 10/dk, Upload: 3/dk, API: 60/dk)
+- **HTML Sanitization** (HtmlSanitizer kütüphanesi ile XSS koruması)
+- SQL Injection/Path Traversal koruması
+- Deaktif kullanıcı onay engeli
 - CORS whitelisting
 - BCrypt password hashing
 - HTTPS redirect
-- Secure headers
+- Secure headers (CSP, X-Frame-Options, etc.)
 
 ## 🛠 Teknoloji Stack
 
@@ -88,7 +91,7 @@ sqlplus XXEPOSTA/password@oracle_host:1521/service_name
 @04_Indexes.sql
 @05_Triggers.sql
 @06_VIEWS.sql
-@07_SampleData.sql  # Opsiyonel
+@07_SampleDataTest.sql  # Opsiyonel
 ```
 
 ### 2. Backend
@@ -100,14 +103,16 @@ nano .env  # Ayarları düzenle
 dotnet restore
 dotnet build -c Release
 dotnet run --environment Production
+
+Önemli!!! ---- web.config.production içeriği sunucuda bulunan web.config dosyası ile değiştir.
 ```
 
 ### 3. Frontend
 ```bash
 cd frontend
 npm install
-npm start  # Development
-npm run build  # Production
+ng serve  # Development
+ng build --configuration production  # Production
 ```
 
 ## ⚙️ Yapılandırma
@@ -116,11 +121,12 @@ npm run build  # Production
 ```json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Oracle connection string"
+    "DefaultConnection": "Oracle 19c connection string",
+    "Oracle11gConnection": "Oracle 11g connection string (personel view)"
   },
   "Jwt": {
-    "Key": "32+ karakter secret key",
-    "ExpirationInMinutes": 1440
+    "Key": "64+ karakter secret key",
+    "ExpirationInMinutes": 720
   },
   "EmailSettings": {
     "SmtpServer": "giden.posta.deu.edu.tr",
@@ -128,6 +134,13 @@ npm run build  # Production
   }
 }
 ```
+
+**Environment Variables** (Production):
+| Değişken | Açıklama |
+|----------|----------|
+| `ConnectionStrings__DefaultConnection` | Oracle 19c bağlantı string'i |
+| `EPOSTA_ORACLE11G_CONNECTION` | Oracle 11g bağlantı string'i (fallback) |
+| `Jwt__Key` | JWT imzalama anahtarı (64+ karakter) |
 
 Detaylar için `backend/.env.example` dosyasına bakınız.
 
@@ -144,7 +157,7 @@ Detaylar için `backend/.env.example` dosyasına bakınız.
 | **VIEWER** | Sadece görüntüleme |
 
 ### İş Akışı
-1. DEÜ LDAP ile giriş
+1. DEÜ LDAP / SSO ile giriş
 2. Duyuru oluştur (şablon/manuel)
 3. Alıcı ekle (grup/manuel)
 4. Önizleme
@@ -206,3 +219,6 @@ Bu yazılım Dokuz Eylül Üniversitesi tarafından kurum içi kullanım için g
 ---
 
 **Versiyon**: 1.0 | **Durum**: Production Ready ✅
+
+### Changelog
+- **v1.0**: İlk production sürümü

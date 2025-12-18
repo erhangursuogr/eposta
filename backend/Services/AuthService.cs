@@ -28,6 +28,7 @@ public class AuthService : IAuthService
     private readonly DeuEpostaContext _context;
     private readonly ILdapService _ldapService;
     private readonly IOracle11gService _oracle11gService;
+    private readonly IAuditLogService _auditLog;
     private readonly IConfiguration _configuration;
     private readonly ILogger<AuthService> _logger;
     private readonly IServiceProvider _serviceProvider;
@@ -40,6 +41,7 @@ public class AuthService : IAuthService
         DeuEpostaContext context,
         ILdapService ldapService,
         IOracle11gService oracle11gService,
+        IAuditLogService auditLog,
         IConfiguration configuration,
         ILogger<AuthService> logger,
         IServiceProvider serviceProvider,
@@ -51,6 +53,7 @@ public class AuthService : IAuthService
         _context = context;
         _ldapService = ldapService;
         _oracle11gService = oracle11gService;
+        _auditLog = auditLog;
         _configuration = configuration;
         _logger = logger;
         _serviceProvider = serviceProvider;
@@ -155,8 +158,20 @@ public class AuthService : IAuthService
                 return response;
             }
 
-            // 11g'den personel bilgilerini güncelle
-            await UpdateUserFromOracle11gAsync(user);
+            // 11g'den personel bilgilerini güncelle ve kurumdan ayrılma kontrolü
+            var (canLogin, deactivationMessage) = await UpdateUserFromOracle11gAsync(user);
+
+            if (!canLogin)
+            {
+                // Kullanıcı kurumdan ayrılmış, pasife çekildi
+                await _context.SaveChangesAsync(); // Pasif durumu kaydet
+                securityService.RecordFailedLoginAttempt(request.Email, clientIP, userAgent);
+                await LogLoginAttemptAsync(request.Email, "LDAP", clientIP, deactivationMessage, null, userAgent);
+                response.Success = false;
+                response.StatusCode = 403;
+                response.Message = deactivationMessage ?? "Hesabınız pasife alınmıştır.";
+                return response;
+            }
 
             var token = GenerateJwtToken(user);
             user.SonGirisTarihi = DateTime.Now;
@@ -234,7 +249,16 @@ public class AuthService : IAuthService
                 _logger.LogInformation("Token {Jti} blacklisted for user {Email}", jti, email);
             }
 
-            await LogLoginAttemptAsync(email, "API", ipAddress, null, user?.Id);
+            // Logout logunu merkezi sunucuya da gönder
+            await _auditLog.LogAsync(
+                kategori: "AUTH",
+                islem: "LOGOUT",
+                detay: $"{email} çıkış yaptı",
+                kullaniciId: user?.Id,
+                ipAdres: ipAddress,
+                logSeviye: "INFO",
+                sendToCentral: true
+            );
 
             _logger.LogInformation("User {Email} logged out from IP {IP}", email, ipAddress);
 
@@ -404,12 +428,19 @@ public class AuthService : IAuthService
         return tokenHandler.WriteToken(token);
     }
 
+    /// <summary>
+    /// Login girişimini loglar:
+    /// 1. LOG_LOGIN tablosu (detaylı login logu)
+    /// 2. LOG_SISTEM + Merkezi Syslog (audit trail)
+    /// </summary>
     private async Task LogLoginAttemptAsync(string email, string girisTuru, string ipAdresi,
         string? hataMesaji, int? kullaniciId = null, string? userAgent = null)
     {
+        var basarili = hataMesaji == null;
+
+        // 1. LOG_LOGIN tablosuna yaz (detaylı login logu)
         try
         {
-            // Email'den kullanıcı adını ayır (@'den önceki kısım)
             var kullaniciAdi = email.Contains("@") ? email.Split('@')[0] : email;
 
             var log = new LogLogin
@@ -421,7 +452,7 @@ public class AuthService : IAuthService
                 IpAdres = ipAdresi,
                 UserAgent = userAgent,
                 HataMesaji = hataMesaji,
-                Basarili = hataMesaji == null ? "Y" : "N",
+                Basarili = basarili ? "Y" : "N",
                 GirisTarihi = DateTime.Now
             };
 
@@ -430,7 +461,31 @@ public class AuthService : IAuthService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error logging login attempt for {User}", email);
+            _logger.LogError(ex, "Error logging to LOG_LOGIN for {User}", email);
+        }
+
+        // 2. LOG_SISTEM + Merkezi Syslog'a yaz (audit trail)
+        try
+        {
+            var islem = basarili ? "LOGIN_SUCCESS" : "LOGIN_FAILED";
+            var detay = basarili
+                ? $"{email} ({girisTuru}) giriş yaptı"
+                : $"{email} ({girisTuru}) - {hataMesaji}";
+
+            await _auditLog.LogAsync(
+                kategori: "AUTH",
+                islem: islem,
+                detay: detay,
+                kullaniciId: kullaniciId,
+                ipAdres: ipAdresi,
+                userAgent: userAgent,
+                logSeviye: basarili ? "INFO" : "WARN",
+                sendToCentral: true
+            );
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error logging to AuditLog for {User}", email);
         }
     }
 
@@ -439,8 +494,10 @@ public class AuthService : IAuthService
     /// 1. Email ile V_PERSONEL_EMAIL_BILGI tablosundan ara
     /// 2. Bulunamazsa XXDEU.KULLANICI -> TC kimlik no -> V_PERSONEL_EMAIL_BILGI
     /// 3. Bulunan bilgileri KULLANICILAR tablosunda güncelle
+    /// 4. Personel kurumdan ayrıldıysa (Durum=1) kullanıcıyı pasife çek
     /// </summary>
-    private async Task UpdateUserFromOracle11gAsync(Kullanici user)
+    /// <returns>true: login devam edebilir, false: kullanıcı kurumdan ayrılmış</returns>
+    private async Task<(bool CanLogin, string? ErrorMessage)> UpdateUserFromOracle11gAsync(Kullanici user)
     {
         try
         {
@@ -450,7 +507,24 @@ public class AuthService : IAuthService
             if (personel == null)
             {
                 _logger.LogWarning("Personel not found in Oracle 11g for email: {Email}", user.Email);
-                return;
+                return (true, null); // 11g'de bulunamadı, mevcut durumla devam
+            }
+
+            // KURUMDAN AYRILMA KONTROLÜ: Durum = 1 ise personel ayrılmış
+            if (personel.Durum.HasValue && personel.Durum.Value != 0)
+            {
+                _logger.LogWarning("User {Email} has left the organization (Durum={Durum}). Deactivating account.",
+                    user.Email, personel.Durum);
+
+                // Kullanıcıyı pasife çek
+                user.Aktif = "N";
+                user.GuncellemeTarihi = DateTime.Now;
+
+                // Cache'i invalidate et
+                var cacheKeyDeactivate = $"user_{user.Email}";
+                _memoryCache.Remove(cacheKeyDeactivate);
+
+                return (false, "Kurumdan ayrıldığınız tespit edilmiştir. Hesabınız pasife alınmıştır.");
             }
 
             // Kullanıcı bilgilerini güncelle
@@ -491,6 +565,13 @@ public class AuthService : IAuthService
                 updated = true;
             }
 
+            if (!string.IsNullOrEmpty(personel.CepTel) && user.CepTel != personel.CepTel)
+            {
+                _logger.LogInformation("Updating CepTel for user: {Email}", user.Email);
+                user.CepTel = personel.CepTel;
+                updated = true;
+            }
+
             // Cache'i her durumda invalidate et (kullanıcı login olduğunda)
             var cacheKey = $"user_{user.Email}";
             _memoryCache.Remove(cacheKey);
@@ -503,11 +584,14 @@ public class AuthService : IAuthService
             {
                 _logger.LogInformation("User {Email} already up to date with Oracle 11g (cache invalidated)", user.Email);
             }
+
+            return (true, null);
         }
         catch (Exception ex)
         {
             // Oracle 11g bağlantı hatası login'i engellemez, sadece log kaydı
             _logger.LogWarning(ex, "Failed to update user from Oracle 11g for {Email}", user.Email);
+            return (true, null); // Hata durumunda login'e izin ver
         }
     }
 
@@ -708,8 +792,19 @@ public class AuthService : IAuthService
                 return response;
             }
 
-            // Oracle 11g sync (LDAP login'deki gibi)
-            await UpdateUserFromOracle11gAsync(user);
+            // Oracle 11g sync ve kurumdan ayrılma kontrolü
+            var (canLogin, deactivationMessage) = await UpdateUserFromOracle11gAsync(user);
+
+            if (!canLogin)
+            {
+                // Kullanıcı kurumdan ayrılmış, pasife çekildi
+                await _context.SaveChangesAsync(); // Pasif durumu kaydet
+                await LogLoginAttemptAsync(email, "SSO", clientIP, deactivationMessage, null);
+                response.Success = false;
+                response.StatusCode = 403;
+                response.Message = deactivationMessage ?? "Hesabınız pasife alınmıştır.";
+                return response;
+            }
 
             // Son giriş tarihini güncelle ve tüm değişiklikleri kaydet
             user.SonGirisTarihi = DateTime.Now;

@@ -66,10 +66,11 @@ a {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
-.logo-text {
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: 1px;
+.logo-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 8px;
 }
 
 .app-name {
@@ -389,8 +390,8 @@ a {
     height: 64px;
   }
 
-  .logo-text {
-    font-size: 26px;
+  .logo-image {
+    padding: 6px;
   }
 
   .user-avatar-sidebar {

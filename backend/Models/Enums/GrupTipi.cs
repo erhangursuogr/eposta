@@ -1,27 +1,27 @@
 namespace DeuEposta.Models.Enums;
 
 /// <summary>
-/// Email grubu tipleri
+/// Email grubu tipleri (Tüm tipler BCC-only - KVKK/GDPR uyumu)
 /// </summary>
 public enum GrupTipi
 {
     /// <summary>
-    /// Normal - Standart email kuralları (TO, CC, BCC kullanılabilir)
+    /// Manuel - Elle eklenen email listesi. Sadece BCC
     /// </summary>
-    NORMAL,
+    MANUEL,
 
     /// <summary>
-    /// Static - Dış kaynaktan seçilmiş liste (XLS, CSV, TXT). Sadece BCC
+    /// Dosya - Dış kaynaktan yüklenmiş liste (Excel, CSV, TXT). Sadece BCC
     /// </summary>
-    STATIK,
+    DOSYA,
 
     /// <summary>
-    /// Dynamic - SQL View ile üyeler gelir. Sadece BCC
+    /// Dinamik - SQL View ile otomatik güncellenen liste. Sadece BCC
     /// </summary>
     DINAMIK,
 
     /// <summary>
-    /// Debis - Mevcut sistem entegrasyonu, gizli listeci email. Sadece BCC
+    /// Debis - Listserv sistemi entegrasyonu, gizli listeci email. Sadece BCC
     /// </summary>
     DEBIS
 }
@@ -32,18 +32,12 @@ public enum GrupTipi
 public static class GrupTipiExtensions
 {
     /// <summary>
-    /// Bu grup tipi BCC-only mu?
+    /// Bu grup tipi BCC-only mu? (Artık TÜM tipler BCC-only)
     /// </summary>
     public static bool IsBccOnly(this GrupTipi grupTipi)
     {
-        return grupTipi switch
-        {
-            GrupTipi.NORMAL => false,
-            GrupTipi.STATIK => true,
-            GrupTipi.DINAMIK => true,
-            GrupTipi.DEBIS => true,
-            _ => true
-        };
+        // Güvenlik için tüm grup tipleri BCC-only (KVKK/GDPR uyumu)
+        return true;
     }
 
     /// <summary>
@@ -61,26 +55,32 @@ public static class GrupTipiExtensions
     {
         return grupTipi switch
         {
-            GrupTipi.NORMAL => "Standart email gönderim kuralları",
-            GrupTipi.STATIK => "Dış kaynaktan yüklenen özel liste",
-            GrupTipi.DINAMIK => "SQL View ile otomatik güncellenen liste",
-            GrupTipi.DEBIS => "Mevcut Debis sistemi entegrasyonu",
+            GrupTipi.MANUEL => "Elle eklenen email listesi",
+            GrupTipi.DOSYA => "Dosyadan yüklenen email listesi",
+            GrupTipi.DINAMIK => "Veritabanından otomatik güncellenen liste",
+            GrupTipi.DEBIS => "Listserv sistemi entegrasyonu",
             _ => "Bilinmeyen tip"
         };
     }
 
     /// <summary>
-    /// String değeri enum'a güvenli dönüşüm (STATIC/STATIK uyumsuzluğunu çözer)
+    /// String değeri enum'a güvenli dönüşüm (Backward compatibility + alias desteği)
     /// </summary>
     public static GrupTipi ParseSafely(string value)
     {
         return value?.ToUpper() switch
         {
-            "NORMAL" => GrupTipi.NORMAL,
-            "STATIK" or "STATIC" => GrupTipi.STATIK,
+            // Yeni değerler
+            "MANUEL" => GrupTipi.MANUEL,
+            "DOSYA" => GrupTipi.DOSYA,
             "DINAMIK" or "DYNAMIC" => GrupTipi.DINAMIK,
             "DEBIS" => GrupTipi.DEBIS,
-            _ => GrupTipi.NORMAL // Default fallback
+
+            // Backward compatibility (eski değerler)
+            "NORMAL" or "STANDART" => GrupTipi.MANUEL,
+            "STATIK" or "STATIC" => GrupTipi.DOSYA,
+
+            _ => GrupTipi.MANUEL // Default fallback
         };
     }
 }

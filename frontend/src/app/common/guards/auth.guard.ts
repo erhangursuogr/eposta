@@ -18,6 +18,14 @@ export const authGuard: CanActivateFn = async (route, state) => {
   const mode = await authService.getAuthMode();
 
   if (mode === '1') {
+    // SSO mode: Önce SSO error kontrolü yap (infinite loop önleme)
+    const ssoError = localStorage.getItem('sso_error');
+    if (ssoError) {
+      // SSO hatası var, callback sayfasına yönlendir (hata mesajını göstermek için)
+      router.navigate(['/auth/callback']);
+      return false;
+    }
+
     // SSO mode: Keycloak redirect
     window.location.href = environment.keycloakAuthUrl;
     return false;
@@ -27,3 +35,4 @@ export const authGuard: CanActivateFn = async (route, state) => {
     return false;
   }
 };
+

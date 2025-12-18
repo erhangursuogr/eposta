@@ -34,7 +34,7 @@ export interface AnnouncementChart {
 export interface GroupStats {
   groupId: number;
   groupName: string;
-  groupType: string; // 'STATIK', 'DINAMIK', 'DEBIS'
+  groupType: string; // 'MANUEL', 'DOSYA', 'DINAMIK', 'DEBIS'
   memberCount: number;
   announcementCount: number;
 }

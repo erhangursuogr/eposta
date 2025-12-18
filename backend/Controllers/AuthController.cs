@@ -17,6 +17,7 @@ public class AuthController : ControllerBase
     private readonly ISecurityService _securityService;
     private readonly ISystemSettingsService _systemSettingsService;
     private readonly IConfiguration _configuration;
+    private readonly IWebHostEnvironment _environment;
     private readonly ILogger<AuthController> _logger;
 
     public AuthController(
@@ -24,12 +25,14 @@ public class AuthController : ControllerBase
         ISecurityService securityService,
         ISystemSettingsService systemSettingsService,
         IConfiguration configuration,
+        IWebHostEnvironment environment,
         ILogger<AuthController> logger)
     {
         _authService = authService;
         _securityService = securityService;
         _systemSettingsService = systemSettingsService;
         _configuration = configuration;
+        _environment = environment;
         _logger = logger;
     }
 
@@ -132,11 +135,21 @@ public class AuthController : ControllerBase
 
     /// <summary>
     /// AUTH_MODE değerini döndürür (0=LDAP, 1=SSO)
+    /// Development ortamında her zaman 0 (LDAP) döner
     /// </summary>
     [HttpGet("mode")]
     [AllowAnonymous]
     public async Task<IActionResult> GetAuthMode()
     {
+        // IWebHostEnvironment ile güvenilir environment kontrolü
+        var isDevelopment = _environment.IsDevelopment();
+
+        // Development modda her zaman LDAP (0) kullan
+        if (isDevelopment)
+        {
+            return Ok(new { mode = "0" });
+        }
+
         var mode = await _systemSettingsService.GetSettingValueAsync("AUTH", "MODE", "0");
         return Ok(new { mode });
     }

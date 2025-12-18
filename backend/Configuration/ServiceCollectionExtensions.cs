@@ -73,6 +73,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<ISystemSettingsService, SystemSettingsService>();
         services.AddScoped<IOracle11gService, Oracle11gService>();
+        services.AddScoped<ISmsService, SmsService>();
         services.AddScoped<IAuditLogService, AuditLogService>();
         services.AddScoped<ILogService, LogService>();
         services.AddSingleton<ITokenBlacklistService, TokenBlacklistService>();

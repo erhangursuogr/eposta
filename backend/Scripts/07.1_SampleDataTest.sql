@@ -270,7 +270,10 @@ INSERT INTO KULLANICILAR (KULLANICI_ADI, AD_SOYAD, EMAIL, ROL_ID, AKTIF, OLUSTUR
 
 -- NORMAL Grup - Manuel üye eklenen gruplar, TO/CC/BCC desteklenir
 INSERT INTO EPOSTA_GRUPLARI (GRUP_ADI, ACIKLAMA, GRUP_TIPI, AKTIF) VALUES
-('Test Normal Grubu', 'Manuel eklenen üyelerle normal email gönderimi', 'NORMAL', 'Y');
+('Test Bilgi İşlem Grubu', 'Manuel eklenen üyelerle duyuru gönderimi', 'MANUEL', 'Y');
+
+INSERT INTO EPOSTA_GRUPLARI (GRUP_ADI, ACIKLAMA, GRUP_TIPI, AKTIF) VALUES
+('Test Kurumsal İletişim Grubu', 'Manuel eklenen üyelerle duyuru gönderimi', 'MANUEL', 'Y');
 
 INSERT INTO EPOSTA_GRUPLARI (GRUP_ADI, ACIKLAMA, GRUP_TIPI, LISTECI_EMAIL, AKTIF) VALUES
 ('Test DEBIS Grubu', 'DEBIS entegrasyonu - Test Grubu', 'DEBIS', 'tum_erhan2025@kordon.adm.deu.edu.tr', 'Y');
@@ -281,16 +284,46 @@ INSERT INTO EPOSTA_GRUPLARI (GRUP_ADI, ACIKLAMA, GRUP_TIPI, LISTECI_EMAIL, AKTIF
 
 -- Normal Grup (ID=1) üyeleri - manuel olarak eklenmiş
 INSERT INTO EPOSTA_GRUP_UYELERI (GRUP_ID, EMAIL, AD_SOYAD, DEPARTMAN, DURUM) VALUES
-((SELECT ID FROM EPOSTA_GRUPLARI WHERE GRUP_ADI = 'Test Normal Grubu'), 'erhan@deu.edu.tr', 'Erhan Gürsu 1', 'Test Departmanı 1', 'AKTIF');
+((SELECT ID FROM EPOSTA_GRUPLARI WHERE GRUP_ADI = 'Test Bilgi İşlem Grubu'), 'erhan@deu.edu.tr', 'Erhan Gürsu 1', 'Test Departmanı', 'AKTIF');
 
 INSERT INTO EPOSTA_GRUP_UYELERI (GRUP_ID, EMAIL, AD_SOYAD, DEPARTMAN, DURUM) VALUES
-((SELECT ID FROM EPOSTA_GRUPLARI WHERE GRUP_ADI = 'Test Normal Grubu'), 'erhan.gursu@deu.edu.tr', 'Erhan Gürsu 2', 'Test Departmanı 2', 'AKTIF');
+((SELECT ID FROM EPOSTA_GRUPLARI WHERE GRUP_ADI = 'Test Bilgi İşlem Grubu'), 'erhan.gursu@deu.edu.tr', 'Erhan Gürsu 2', 'Test Departmanı', 'AKTIF');
 
 INSERT INTO EPOSTA_GRUP_UYELERI (GRUP_ID, EMAIL, AD_SOYAD, DEPARTMAN, DURUM) VALUES
-((SELECT ID FROM EPOSTA_GRUPLARI WHERE GRUP_ADI = 'Test Normal Grubu'), 'rukiye@deu.edu.tr', 'Test Kullanıcı 1', 'Test Departmanı 3', 'AKTIF');
+((SELECT ID FROM EPOSTA_GRUPLARI WHERE GRUP_ADI = 'Test Bilgi İşlem Grubu'), 'rukiye@deu.edu.tr', 'Test Kullanıcı 3', 'Test Departmanı', 'AKTIF');
 
 INSERT INTO EPOSTA_GRUP_UYELERI (GRUP_ID, EMAIL, AD_SOYAD, DEPARTMAN, DURUM) VALUES
-((SELECT ID FROM EPOSTA_GRUPLARI WHERE GRUP_ADI = 'Test Normal Grubu'), 'sami@deu.edu.tr', 'Test Kullanıcı 3', 'Test Departmanı 4', 'AKTIF');
+((SELECT ID FROM EPOSTA_GRUPLARI WHERE GRUP_ADI = 'Test Bilgi İşlem Grubu'), 'sami@deu.edu.tr', 'Test Kullanıcı 4', 'Test Departmanı', 'AKTIF');
+
+INSERT INTO EPOSTA_GRUP_UYELERI (GRUP_ID, EMAIL, AD_SOYAD, DEPARTMAN, DURUM) VALUES
+((SELECT ID FROM EPOSTA_GRUPLARI WHERE GRUP_ADI = 'Test Kurumsal İletişim Grubu'), 'oguz.gumuscap@deu.edu.tr', 'oguz.gumuscap', 'Test Departmanı 1', 'AKTIF');
+
+INSERT INTO EPOSTA_GRUP_UYELERI (GRUP_ID, EMAIL, AD_SOYAD, DEPARTMAN, DURUM) VALUES
+((SELECT ID FROM EPOSTA_GRUPLARI WHERE GRUP_ADI = 'Test Kurumsal İletişim Grubu'), 'ozan.akgun@deu.edu.tr', 'ozan.akgun', 'Test Departmanı 1', 'AKTIF');
+
+INSERT INTO EPOSTA_GRUP_UYELERI (GRUP_ID, EMAIL, AD_SOYAD, DEPARTMAN, DURUM) VALUES
+((SELECT ID FROM EPOSTA_GRUPLARI WHERE GRUP_ADI = 'Test Kurumsal İletişim Grubu'), 'arifenes.durak@deu.edu.tr', 'arifenes.durak', 'Test Departmanı 1', 'AKTIF');
+
+INSERT INTO EPOSTA_GRUP_UYELERI (GRUP_ID, EMAIL, AD_SOYAD, DEPARTMAN, DURUM) VALUES
+((SELECT ID FROM EPOSTA_GRUPLARI WHERE GRUP_ADI = 'Test Kurumsal İletişim Grubu'), 'merve.karagoz@deu.edu.tr', 'merve.karagoz', 'Test Departmanı 1', 'AKTIF');
+
+INSERT INTO EPOSTA_GRUP_UYELERI (GRUP_ID, EMAIL, AD_SOYAD, DEPARTMAN, DURUM) VALUES
+((SELECT ID FROM EPOSTA_GRUPLARI WHERE GRUP_ADI = 'Test Kurumsal İletişim Grubu'), 'melih.seymen@deu.edu.tr', 'melih.seymen', 'Test Departmanı 1', 'AKTIF');
+
+INSERT INTO EPOSTA_GRUP_UYELERI (GRUP_ID, EMAIL, AD_SOYAD, DEPARTMAN, DURUM) VALUES
+((SELECT ID FROM EPOSTA_GRUPLARI WHERE GRUP_ADI = 'Test Kurumsal İletişim Grubu'), 'alpkemal.muezzinoglu@deu.edu.tr', 'alpkemal.muezzinoglu', 'Test Departmanı 1', 'AKTIF');
+
+INSERT INTO EPOSTA_GRUP_UYELERI (GRUP_ID, EMAIL, AD_SOYAD, DEPARTMAN, DURUM) VALUES
+((SELECT ID FROM EPOSTA_GRUPLARI WHERE GRUP_ADI = 'Test Kurumsal İletişim Grubu'), 'ece.morgul@deu.edu.tr', 'aece.morgul', 'Test Departmanı 1', 'AKTIF');
+
+INSERT INTO EPOSTA_GRUP_UYELERI (GRUP_ID, EMAIL, AD_SOYAD, DEPARTMAN, DURUM) VALUES
+((SELECT ID FROM EPOSTA_GRUPLARI WHERE GRUP_ADI = 'Test Kurumsal İletişim Grubu'), 'emine.altinkaynakabda@deu.edu.tr', 'emine.altinkaynakabda', 'Test Departmanı 1', 'AKTIF');
+
+INSERT INTO EPOSTA_GRUP_UYELERI (GRUP_ID, EMAIL, AD_SOYAD, DEPARTMAN, DURUM) VALUES
+((SELECT ID FROM EPOSTA_GRUPLARI WHERE GRUP_ADI = 'Test Kurumsal İletişim Grubu'), 'ederya.top@deu.edu.tr', 'derya.top', 'Test Departmanı 1', 'AKTIF');
+
+INSERT INTO EPOSTA_GRUP_UYELERI (GRUP_ID, EMAIL, AD_SOYAD, DEPARTMAN, DURUM) VALUES
+((SELECT ID FROM EPOSTA_GRUPLARI WHERE GRUP_ADI = 'Test Kurumsal İletişim Grubu'), 'erhan.gursu@deu.edu.tr', 'erhan.gursu', 'Test Departmanı 1', 'AKTIF');
 
 -- =============================================
 -- 6. EPOSTA SABLON KATEGORİLERİ
